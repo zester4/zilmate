@@ -1,6 +1,6 @@
 {
   "name": "zilmate",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "description": "ZilMate CLI multi-agent assistant for ZiloShift workflows.",
   "type": "module",
   "main": "dist/server.js",
@@ -59,6 +59,7 @@
     "commander": "^15.0.0",
     "cross-fetch": "^4.1.0",
     "dotenv": "^17.4.2",
+    "log-update": "^8.0.0",
     "marked": "^15.0.12",
     "marked-terminal": "^7.3.0",
     "pdfkit": "^0.19.1",
@@ -78,8 +79,10 @@
   "files": [
     "dist",
     "src/doc",
+    "scripts/",
     "agent-docs.md",
     "README.md",
+    "SDK.md",
     ".env.example",
     "install.ps1"
   ],

@@ -253,6 +253,23 @@ function envHasValue(values: Map<string, string>, key: string) {
   return Boolean(value && value.trim() !== '');
 }
 
+async function configureCloudflareTunnelSection(rl: readline.Interface, values: Map<string, string>) {
+  console.log(chalk.cyan('\nCloudflare quick tunnel'));
+  console.log(chalk.gray('QStash hosted schedules need a public HTTPS webhook. cloudflared creates a free quick tunnel to your laptop.'));
+  console.log(chalk.gray('Install: https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/'));
+  console.log(chalk.gray('While your laptop is on, keep the tunnel alive with: zilmate jobs listen --tunnel'));
+  const hasCloudflared = await commandExists('cloudflared');
+  if (!hasCloudflared) {
+    console.log(chalk.yellow('cloudflared not found on PATH. Install it, or paste ZILMATE_PUBLIC_JOB_WEBHOOK_URL manually.'));
+    return;
+  }
+  if (envHasValue(values, 'ZILMATE_PUBLIC_JOB_WEBHOOK_URL')) {
+    console.log(chalk.green(`Existing webhook: ${values.get('ZILMATE_PUBLIC_JOB_WEBHOOK_URL')}`));
+    if (!await askYesNo(rl, 'Create a new Cloudflare quick tunnel URL?', false)) return;
+  }
+  await maybeCreateCloudflareWebhook(rl, values);
+}
+
 async function maybeCreateCloudflareWebhook(rl: readline.Interface, values: Map<string, string>) {
   const hasCloudflared = await commandExists('cloudflared');
   if (!hasCloudflared) {
@@ -398,6 +415,12 @@ export async function runSetup(options: SetupOptions = {}) {
       values.set('ZILMATE_JOBS_ENABLED', 'false');
     }
 
+    if (!options.yes && values.get('ZILMATE_JOBS_ENABLED') === 'true' && !envHasValue(values, 'ZILMATE_PUBLIC_JOB_WEBHOOK_URL')) {
+      if (await askYesNo(rl, 'Configure Cloudflare quick tunnel for job webhooks now?', false)) {
+        await configureCloudflareTunnelSection(rl, values);
+      }
+    }
+
     if (!options.yes && options.qstashToken === undefined) {
       if (await askSection(
         rl,
@@ -409,7 +432,7 @@ export async function runSetup(options: SetupOptions = {}) {
         values.set('UPSTASH_QSTASH_TOKEN', await askOptionalSecret(rl, 'UPSTASH_QSTASH_TOKEN (blank to skip): '));
         const existingWebhook = values.get('ZILMATE_PUBLIC_JOB_WEBHOOK_URL');
         if (!existingWebhook) {
-          await maybeCreateCloudflareWebhook(rl, values);
+          await configureCloudflareTunnelSection(rl, values);
         }
         if (!values.get('ZILMATE_PUBLIC_JOB_WEBHOOK_URL')) {
           values.set('ZILMATE_PUBLIC_JOB_WEBHOOK_URL', (await rl.question('ZILMATE_PUBLIC_JOB_WEBHOOK_URL (blank for local only): ')).trim());

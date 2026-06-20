@@ -2,7 +2,7 @@
 import { Command } from 'commander';
 import { generateText } from 'ai';
 import { requireGatewayAuth } from './config/env.js';
-import { getModelAvailability, models } from './config/models.js';
+import { models } from './config/models.js';
 import { runManager } from './agents/manager.js';
 import { createQuickHelpAgent } from './agents/quick-help.agent.js';
 import { createChatAgent } from './agents/chat.agent.js';
@@ -11,7 +11,6 @@ import { createDocsResearchAgent } from './agents/docs-research.agent.js';
 import { generateImageAsset, isImageSize } from './tools/image-generate.tool.js';
 import { startInteractiveChat } from './cli/interactive.js';
 import { runSetup, runVoiceSetup, setVoiceEnabled } from './cli/setup.js';
-import { memoryBackendName } from './memory/redis.js';
 import { printError, printJson, printMarkdown, printProgress } from './cli/format.js';
 import { createTerminalConfirmation } from './cli/confirm.js';
 import { getComposioStatus } from './tools/composio.tool.js';
@@ -30,6 +29,7 @@ import { printMemoryTable } from './cli/memory.js';
 import { listVoiceDevices, printVoiceConfig, runTerminalVoiceLive, runVoiceAgentProbe, runVoiceDoctor, runVoiceSpeakTest, runVoiceTurn } from './cli/voice.js';
 import { printVersionStatus, runSelfUpdate } from './cli/update.js';
 import { captureCameraCli, listCameraDevicesCli, runCameraDoctorCli } from './cli/camera.js';
+import { printModelBrowser } from './cli/models.js';
 
 type TextAgentFactory = () => { generate: (input: { prompt: string }) => Promise<{ text: string }> };
 
@@ -57,7 +57,7 @@ const program = new Command();
 program
   .name('zilmate')
   .description('ZilMate Agent')
-  .version('1.6.0');
+  .version('1.7.0');
 
 program
   .command('welcome')
@@ -793,18 +793,14 @@ triggers
 
 program
   .command('models')
-  .description('Show configured Gateway models and availability warnings')
-  .action(async () => {
+  .option('-p, --provider <provider>', 'filter models by provider or text, e.g. openai, google, gemini, anthropic')
+  .option('-l, --limit <number>', 'models per page', '20')
+  .option('--page <number>', 'page number', '1')
+  .description('Browse available AI Gateway models')
+  .action(async (options: { provider?: string; limit?: string; page?: string }) => {
     try {
       requireGatewayAuth();
-      const availability = await getModelAvailability();
-      printJson({
-        selected: availability.selected,
-        memory: memoryBackendName(),
-        availableCount: availability.availableIds.length,
-        missing: availability.missing,
-        warnings: availability.warnings,
-      });
+      await printModelBrowser(options);
     } catch (error) {
       printError(friendlyError(error));
       process.exitCode = 1;
@@ -938,8 +934,6 @@ if (process.argv.length <= 2) {
   process.exitCode = 1;
   });
 }
-
-
 
 
 

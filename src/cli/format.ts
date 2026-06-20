@@ -77,9 +77,27 @@ function renderBlockquote(token: Tokens.Blockquote) {
 }
 
 function renderTable(token: Tokens.Table) {
-  const header = token.header.map((cell) => chalk.bold(stripInline(cell.text))).join(chalk.gray(' | '));
-  const rows = token.rows.map((row) => row.map((cell) => stripInline(cell.text)).join(' | '));
-  return [header, chalk.gray('─'.repeat(Math.min(header.length, maxWidth()))), ...rows].join('\n');
+  const rows = [
+    token.header.map((cell) => stripInline(cell.text)),
+    ...token.rows.map((row) => row.map((cell) => stripInline(cell.text))),
+  ];
+  const widths = tableWidths(rows[0] || [], rows.slice(1));
+  const top = `╭${widths.map((width) => '─'.repeat(width + 2)).join('┬')}╮`;
+  const middle = `├${widths.map((width) => '─'.repeat(width + 2)).join('┼')}┤`;
+  const bottom = `╰${widths.map((width) => '─'.repeat(width + 2)).join('┴')}╯`;
+  const render = (row: string[], header = false) => (
+    `│${row.map((cell, index) => {
+      const value = clip(cell, widths[index] ?? 12);
+      return ` ${header ? chalk.bold.cyanBright(value) : colorCell(value)} `;
+    }).join('│')}│`
+  );
+  return [
+    chalk.cyan(top),
+    render(rows[0] || [], true),
+    chalk.cyan(middle),
+    ...rows.slice(1).map((row) => render(row)),
+    chalk.cyan(bottom),
+  ].join('\n');
 }
 
 function renderTokens(tokens: unknown[], indent = 0): string {
@@ -279,6 +297,18 @@ function printProgressWithSpinner(event: ProgressEvent) {
     activeSpinner = undefined;
   }
 
+  if (event.type === 'tool:start') {
+    const label = event.detail ? `${event.label}(${event.detail.slice(0, 80)})` : event.label;
+    console.log(`${chalk.green('●')} ${chalk.hex('#A78BFA')(label)}`);
+    return;
+  }
+
+  if (event.type === 'tool:end') {
+    const summary = event.detail ? `${event.label} · ${event.detail.slice(0, 100)}` : event.label;
+    console.log(`${chalk.gray('  └')} ${chalk.gray(summary)}`);
+    return;
+  }
+
   if (event.type === 'subagent:start') {
     console.log(chalk.magenta(`\n╭─ ${event.agent || 'subagent'} ─ ${event.label}`));
     if (event.detail) console.log(chalk.gray(`│  ${clip(event.detail, maxWidth() - 6)}`));
@@ -327,6 +357,5 @@ function printProgressWithSpinner(event: ProgressEvent) {
 export function printError(message: string) {
   console.error(chalk.red(message));
 }
-
 
 

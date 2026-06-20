@@ -1,3 +1,15 @@
+ZilMate coding-agent note
+
+ZilMate uses the AI SDK v6 subagent pattern for coding work:
+
+- Manager delegates software work to the main Coding Agent.
+- Coding Agent stays responsible for orchestration and the final report.
+- Coding Agent can call `appBuilder` for full app/game/software implementation.
+- Coding Agent can call `qaIntegration` for builds, tests, debugging, and release-readiness checks.
+- Both internal coding delegates use skills, file tools, shell tools, and notebook tools.
+- Use scratchpad for temporary run coordination and notebook for durable project memory.
+- Delegate tools pass `abortSignal` into subagents and emit subagent progress events so the CLI can show what is happening.
+
 Building Subagents in the Vercel AI SDK v6
 11 min read
 ·

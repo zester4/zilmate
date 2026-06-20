@@ -1,10 +1,16 @@
 import { requireGatewayAuth } from './config/env.js';
+import { applyStoredModelSelections } from './config/model-store.js';
 import { createChatAgent } from './agents/chat.agent.js';
+import { createCodingAgent } from './agents/coding.agent.js';
+import { createImageAgent } from './agents/image.agent.js';
+import { createGoalManagerAgent } from './agents/goal-manager.agent.js';
 import { createDocsResearchAgent } from './agents/docs-research.agent.js';
 import { createPostAgent } from './agents/post.agent.js';
 import { createQuickHelpAgent } from './agents/quick-help.agent.js';
 import { runManager } from './agents/manager.js';
 import { generateImageAsset, type ImageGenerationOptions, type ImageGenerationResult } from './tools/image-generate.tool.js';
+import { buildSituationBrief } from './tools/situational-awareness.tool.js';
+import { loadSessionHandoff } from './tools/session-continuity.tool.js';
 import { clearMemories, forget, listMemories, recall, remember, type LongTermMemory } from './memory/long-term.js';
 import type { ConfirmationHandler, ConfirmationRequest } from './runtime/confirm.js';
 import { clearSessionApprovals } from './runtime/confirm.js';
@@ -17,7 +23,7 @@ import { getVoiceConfig, startDeepgramVoiceAgentSession } from './voice/deepgram
 import type { ZilMateVoiceConfig, ZilMateVoiceSessionOptions, ZilMateVoiceSessionResult } from './voice/types.js';
 
 export type { ConfirmationHandler, ConfirmationRequest, ProgressEvent };
-export { clearSessionApprovals };
+export { clearSessionApprovals, applyStoredModelSelections, buildSituationBrief, loadSessionHandoff };
 export type { ZilMateVoiceConfig, ZilMateVoiceSessionOptions, ZilMateVoiceSessionResult };
 export type { ImageGenerationOptions, ImageGenerationResult, LongTermMemory };
 export type { CreateJobInput, JobLog, JobStatus, ListJobsOptions, ZilMateJob };
@@ -58,10 +64,11 @@ export type ZilMateTextResult = {
   text: string;
 };
 
-type TextAgentFactory = () => { generate: (input: { prompt: string }) => Promise<{ text: string }> };
+type TextAgentFactory = () => { generate: (input: { prompt: string; abortSignal?: AbortSignal }) => Promise<{ text: string }> };
 
 async function runTextAgent(agentFactory: TextAgentFactory, prompt: string): Promise<ZilMateTextResult> {
   requireGatewayAuth();
+  await applyStoredModelSelections();
   const result = await agentFactory().generate({ prompt });
   return { text: result.text };
 }
@@ -108,6 +115,22 @@ export function createZilMate(options: ZilMateOptions = {}) {
     research: async (input: ZilMateResearchInput | ZilMateTextInput): Promise<ZilMateTextResult> => (
       runTextAgent(createDocsResearchAgent, getPrompt(input))
     ),
+
+    coding: async (input: ZilMatePromptInput): Promise<ZilMateTextResult> => (
+      runTextAgent(() => createCodingAgent(sessionId), input.prompt)
+    ),
+
+    imageAgent: async (input: ZilMatePromptInput): Promise<ZilMateTextResult> => (
+      runTextAgent(createImageAgent, input.prompt)
+    ),
+
+    goalManager: async (input: ZilMatePromptInput): Promise<ZilMateTextResult> => (
+      runTextAgent(createGoalManagerAgent, input.prompt)
+    ),
+
+    situation: async (input: { sessionId?: string } = {}) => buildSituationBrief(input.sessionId || sessionId),
+
+    handoff: async (input: { sessionId?: string } = {}) => loadSessionHandoff(input.sessionId || sessionId),
 
     image: async (input: ZilMatePromptInput & ImageGenerationOptions): Promise<ImageGenerationResult> => {
       const { prompt, provider, size, outputDir } = input;

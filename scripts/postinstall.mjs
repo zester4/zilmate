@@ -1,3 +1,4 @@
+// postinstall.mjs
 import { mkdir, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';

@@ -1,6 +1,7 @@
 import { Composio, type IncomingTriggerPayload, type TriggerSubscribeParams } from '@composio/core';
 import { env, requireComposio } from '../config/env.js';
 import { handleComposioTriggerWorkflow, triggerWorkflowsEnabled } from '../jobs/workflows.js';
+import { printPanel, printTable } from './format.js';
 
 type TriggerListOptions = {
   limit?: string;
@@ -134,9 +135,13 @@ function printTriggerEvent(event: IncomingTriggerPayload, asJson: boolean) {
 
   const summary = pickTriggerEventSummary(event.payload);
   const stamp = new Date().toLocaleTimeString();
-  const heading = `[${stamp}] [${event.triggerSlug}]`;
-  console.log(summary ? `${heading} ${summary}` : heading);
-  console.log(`  toolkit=${event.toolkitSlug} trigger=${event.id} user=${event.userId || 'unknown'}`);
+  printPanel('Trigger Event', [
+    ['Time', stamp],
+    ['Toolkit', event.toolkitSlug || 'unknown'],
+    ['Trigger', event.triggerSlug || event.id || 'unknown'],
+    ['User', event.userId || 'unknown'],
+    ['Summary', summary || '-'],
+  ]);
 }
 
 async function handleTriggerWorkflow(event: IncomingTriggerPayload) {
@@ -165,10 +170,14 @@ export async function listTriggerTypes(toolkit: string | undefined, options: Tri
     return;
   }
 
-  for (const item of response.items) {
-    console.log(`${item.slug} (${item.toolkit.slug})`);
-    if (item.description) console.log(`  ${item.description}`);
-  }
+  printTable(
+    ['Trigger', 'Toolkit', 'Description'],
+    response.items.map((item) => [
+      item.slug,
+      item.toolkit.slug,
+      item.description || '-',
+    ]),
+  );
   if (response.nextCursor) console.log(`Next cursor: ${response.nextCursor}`);
 }
 
@@ -181,8 +190,11 @@ export async function showTriggerType(triggerSlug: string, options: { json?: boo
     return;
   }
 
-  console.log(`${triggerType.slug} (${triggerType.toolkit.slug})`);
-  console.log(triggerType.description);
+  printPanel('Trigger Type', [
+    ['Slug', triggerType.slug],
+    ['Toolkit', triggerType.toolkit.slug],
+    ['Description', triggerType.description || '-'],
+  ]);
   if (triggerType.instructions) console.log(`\n${triggerType.instructions}`);
   console.log('\nConfig schema:');
   printJson(triggerType.config);
@@ -203,15 +215,20 @@ export async function listTriggers(options: TriggerListOptions) {
   }
 
   if (response.items.length === 0) {
-    console.log('No active Composio triggers found.');
+    printPanel('Composio Triggers', [['Status', 'No active triggers found']]);
     return;
   }
 
-  for (const item of response.items) {
-    const status = item.disabledAt ? 'disabled' : 'enabled';
-    console.log(`${item.id} ${item.triggerName} (${status})`);
-    console.log(`  connectedAccount=${item.connectedAccountId} updated=${item.updatedAt}`);
-  }
+  printTable(
+    ['ID', 'Name', 'Status', 'Connected Account', 'Updated'],
+    response.items.map((item) => [
+      item.id,
+      item.triggerName,
+      item.disabledAt ? 'disabled' : 'enabled',
+      item.connectedAccountId || '-',
+      item.updatedAt || '-',
+    ]),
+  );
 }
 
 export async function createTrigger(triggerSlug: string, options: TriggerCreateOptions, unknownArgs: string[]) {

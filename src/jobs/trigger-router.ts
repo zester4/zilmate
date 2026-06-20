@@ -109,20 +109,24 @@ export async function buildOrchestrationPlanWithRouting(event: IncomingTriggerPa
 
 export function formatOrchestrationProposal(plan: TriggerOrchestrationPlan) {
   const lines = [
-    `Chain ${plan.chainId}`,
+    'Trigger workflow proposal',
+    '',
+    `Chain: ${plan.chainId}`,
     `Priority: ${plan.priority}`,
     `Route: ${plan.route}`,
     `Category: ${plan.category}`,
     `Reason: ${plan.reasoning}`,
     '',
     'Primary job:',
-    plan.primaryTask.slice(0, 500) + (plan.primaryTask.length > 500 ? '...' : ''),
+    `- ${plan.primaryTask.slice(0, 500)}${plan.primaryTask.length > 500 ? '...' : ''}`,
   ];
   if (plan.followUps.length) {
     lines.push('', 'Follow-up jobs:');
     for (const followUp of plan.followUps) {
-      lines.push(`- [${followUp.schedule}] ${followUp.purpose}: ${followUp.task.slice(0, 200)}`);
+      lines.push(`- ${followUp.purpose} (${followUp.schedule}): ${followUp.task.slice(0, 220)}${followUp.task.length > 220 ? '...' : ''}`);
     }
+  } else {
+    lines.push('', 'Follow-up jobs:', '- none');
   }
   return lines.join('\n');
 }

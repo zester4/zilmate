@@ -23,6 +23,7 @@ import { memoryTools } from '../tools/memory.tool.js';
 import { triggerTools } from '../tools/triggers.tool.js';
 import { jobTools } from '../tools/jobs.tool.js';
 import { timeTools } from '../tools/time.tool.js';
+import { weatherTools } from '../tools/weather.tool.js';
 import { fileSystemTools } from '../tools/filesystem.tool.js';
 import { desktopTools } from '../tools/desktop.tool.js';
 import { computerUseTools } from '../tools/computer-use.tool.js';
@@ -40,6 +41,8 @@ import { notifyTools } from '../tools/notify.tool.js';
 import { documentTools } from '../tools/documents.tool.js';
 import { askTools } from '../tools/ask.tool.js';
 import { withAskHandler, type AskHandler } from '../runtime/ask.js';
+import { situationalAwarenessTools } from '../tools/situational-awareness.tool.js';
+import { sessionContinuityTools } from '../tools/session-continuity.tool.js';
 
 function agentInput(prompt: string, abortSignal?: AbortSignal) {
   return abortSignal ? { prompt, abortSignal } : { prompt };
@@ -119,6 +122,9 @@ function describeTool(name: string) {
     manageWindow: 'Managing application windows',
     findOnScreen: 'Finding UI element on screen',
     dragAndDrop: 'Dragging and dropping',
+    getWeather: 'Getting weather forecast',
+    getForecast: 'Getting multi-day weather forecast',
+    getCurrentLocation: 'Detecting location from IP',
   };
   return labels[name] || `Using ${name}`;
 }
@@ -183,7 +189,7 @@ export async function createManagerAgent(runId: string = randomUUID(), options: 
     model: models.manager,
     instructions: [
       'You are ZilMate, a general CLI assistant with deep built-in ZiloShift expertise.',
-      'Know your current capabilities: you have text chat, realtime voice mode with speech input and spoken replies, shared session history, long-term memory, background jobs, scheduled tasks, Composio app tools/triggers, web/docs research, time/date tools, file tools, clipboard, screenshot, camera/photo analysis, image generation, and specialized subagents for automation, personal assistant planning, developer help, research, chat, posts, and images.',
+      'Know your current capabilities: you have text chat, realtime voice mode with speech input and spoken replies, shared session history, long-term memory, background jobs, scheduled tasks, Composio app tools/triggers, web/docs research, time/date tools, file tools, shell tools, computer-use UI tools, clipboard, screenshot, camera/photo analysis, image generation and image editing, and specialized subagents for automation, personal assistant planning, developer help, research, chat, posts, images, coding, and authorized security work.',
       'When asked what features or tools you lack, do not claim you lack capabilities that are already listed. Instead, identify genuine gaps such as hosted always-on workers without deployment, richer mobile UI, deeper proactive monitoring, first-party calendar/email UX, more robust permission management, or marketplace-quality integrations.',
       'Route ZiloShift/support/worker/venue/payment/verification/SMS/dispute questions through the local Zilo docs before using web research.',
       'Use Composio tools for external app tasks such as GitHub, Gmail, Slack, Notion, Stripe, Supabase, and other connected-account actions. If a needed app is not connected, use Composio connection management and surface the connect link to the user.',
@@ -195,13 +201,16 @@ export async function createManagerAgent(runId: string = randomUUID(), options: 
       'When multiple tools need user permission, they are approved one at a time. Do not assume a batch approval covers later actions.',
       'Explain that local jobs require `zilmate jobs worker` to be running, and hosted laptop-closed schedules require QStash plus a public job webhook.',
       'Use getCurrentTime whenever the user asks about the current date, current time, today, tomorrow, yesterday, or any schedule-relative wording. Do not guess dates or times.',
+      'Use getCurrentLocation to detect the user\'s approximate location (city, region, country, lat/lon) from their IP address — no API key needed. Use getWeather to get current conditions for any city or coordinates. Use getForecast for multi-day forecasts (up to 7 days). All three use free public APIs with zero setup.',
       'Use file-system tools for local file search, reading, writing, folder creation, moving/copying/renaming, document summaries, folder change checks, duplicate/large file audits, and file metadata. File operations are free and unrestricted. Use deleteFile and deleteFolder to remove files (requires confirm=true for safety).',
       'Use shell tools to execute commands and Python scripts: executeCommand runs any shell/PowerShell command (node, python, npm, pnpm, yarn, pip, builds, tests, etc.), installDependencies auto-detects and installs packages, runPipeline chains commands with pipes (cmd1 | cmd2), getSystemInfo gets CPU/memory/OS details, listProcesses lists running apps, findInPath checks if a command exists. These tools make the agent truly powerful in the CLI—capable of running any automation, installing packages, running tests, and executing applications.',
       'Use desktop tools for clipboard (read/write), screenshots (capture/analyze), camera, file/app launching (openFile, openApplication), system information (getSystemInfo), running app enumeration (listRunningApplications), and keyboard automation (simulateKeyboard for typing, hotkeys, Enter/Escape/etc). Desktop tools enable full system automation and UI control.',
       'When returning tool slugs, trigger slugs, ids, env vars, or command names, wrap them in backticks so exact underscores and casing are preserved.',
-      'Use specialized subagents for focused chat, quick help, post copy, image assets, research, automation planning, personal-assistant planning, developer integration help, coding (git-aware patches and repo edits), and security (OSINT investigations + penetration testing).',
+      'Use specialized subagents for focused chat, quick help, post copy, image assets and image edits, research, automation planning, personal-assistant planning, developer integration help, coding (git-aware patches and repo edits), and security (permission-aware OSINT investigations + penetration testing).',
       'Before specialized work, use searchSkills and readSkill when a matching SKILL.md exists (like Claude Code skills). Follow loaded skill instructions for that task.',
-      'Know your workspace: ~/Downloads/ZilMate (or ZILMATE_WORKSPACE) holds notebook.md, notes.json, knowledge-graph.json, skills/, outputs/, logs/, and scratch/. Use workspace and notebook tools to persist learnings beyond scratchpad.',
+      'Know your workspace: ~/Downloads/ZilMate (or ZILMATE_WORKSPACE) holds notebook.md, notes.json, knowledge-graph.json, skills/, outputs/, logs/, and scratch/. Use scratchpad for temporary run context. Use notebook tools for durable project memory: architecture decisions, setup steps, recurring errors, user preferences, ports, commands, and handoff notes.',
+      'Use getSituationBrief at the start of substantial work so you know cwd, git, workspace, jobs, models, memory, projects, and capabilities before acting.',
+      'Use getSessionHandoff / generateSessionHandoff / saveSessionHandoff to continue where the user left off across sessions.',
       'Use checkSetupStatus and launchSecureSetup when users skipped setup — never ask for or handle API keys in chat; they run `zilmate setup` privately. configureSafeSetting only for non-secret flags.',
       'Use runHealPass after substantial sessions to capture what worked, fix missed personal context, and update the knowledge graph.',
       'Use knowledge graph tools to model people, projects, and goals (e.g. owner → ZiloShift, Hubtel). Use goalManager to break goals into actionable steps.',
@@ -234,7 +243,7 @@ export async function createManagerAgent(runId: string = randomUUID(), options: 
         const result = await post.generate(agentInput(prompt, abortSignal));
         return result.text;
       }),
-      image: subagentTool('image', 'Generate image assets and return saved local file paths.', async (prompt, abortSignal) => {
+      image: subagentTool('image', 'Generate or edit image assets from prompts, local image paths, image URLs, and masks; return saved local file paths.', async (prompt, abortSignal) => {
         const result = await image.generate(agentInput(prompt, abortSignal));
         return result.text;
       }),
@@ -276,6 +285,7 @@ export async function createManagerAgent(runId: string = randomUUID(), options: 
       ...ziloDocsTools,
       ...memoryTools,
       ...timeTools,
+      ...weatherTools,
       ...fileSystemTools,
       ...desktopTools,
       ...jobTools,
@@ -296,6 +306,8 @@ export async function createManagerAgent(runId: string = randomUUID(), options: 
       ...notifyTools,
       ...documentTools,
       ...askTools,
+      ...situationalAwarenessTools,
+      ...sessionContinuityTools,
     },
     stopWhen: stepCountIs(limits.managerSteps),
   });
@@ -328,6 +340,4 @@ export async function runManager(prompt: string, options: { progress?: (event: P
     });
   });
 }
-
-
 

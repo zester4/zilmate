@@ -22,18 +22,22 @@ const cheapModelCandidates = [
   'mistral/mistral-small-latest',
 ];
 
+function pick(defaultValue: string, envKey: string, fallback?: string) {
+  return process.env[envKey] || defaultValue || fallback || cheapModelCandidates[0]!;
+}
+
 export const models: ModelRegistry = {
-  manager: env.managerModel,
-  help: env.helpModel || cheapModelCandidates[0]!,
-  post: env.postModel || cheapModelCandidates[0]!,
-  chat: env.helpModel || env.managerModel,
-  research: env.managerModel,
-  coding: env.codingModel || env.managerModel,
-  imageDefaultProvider: env.imageDefaultProvider,
-  imageOpenai: env.imageOpenaiModel,
-  imageGemini: env.imageGeminiModel,
-  image: env.imageDefaultProvider === 'gemini' ? env.imageGeminiModel : env.imageOpenaiModel,
-  screenshotVision: env.screenshotVisionModel,
+  get manager() { return pick(env.managerModel, 'ZILO_MANAGER_MODEL'); },
+  get help() { return pick(env.helpModel || cheapModelCandidates[0]!, 'ZILO_HELP_MODEL'); },
+  get post() { return pick(env.postModel || cheapModelCandidates[0]!, 'ZILO_POST_MODEL'); },
+  get chat() { return pick(env.helpModel || env.managerModel, 'ZILO_HELP_MODEL', env.managerModel); },
+  get research() { return pick(env.managerModel, 'ZILO_MANAGER_MODEL'); },
+  get coding() { return pick(env.codingModel || env.managerModel, 'ZILO_CODING_MODEL', env.managerModel); },
+  get imageDefaultProvider() { return env.imageDefaultProvider; },
+  get imageOpenai() { return pick(env.imageOpenaiModel, 'ZILO_IMAGE_OPENAI_MODEL'); },
+  get imageGemini() { return pick(env.imageGeminiModel, 'ZILO_IMAGE_GEMINI_MODEL'); },
+  get image() { return env.imageDefaultProvider === 'gemini' ? models.imageGemini : models.imageOpenai; },
+  get screenshotVision() { return pick(env.screenshotVisionModel, 'ZILMATE_SCREENSHOT_MODEL'); },
 };
 
 export type ModelAvailability = {

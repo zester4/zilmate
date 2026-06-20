@@ -2,17 +2,24 @@
 import { stdin as input, stdout as output } from 'node:process';
 import { randomUUID } from 'node:crypto';
 import { requireGatewayAuth } from '../config/env.js';
+import { applyStoredModelSelections } from '../config/model-store.js';
+import { models } from '../config/models.js';
 import { runManager } from '../agents/manager.js';
 import { loadTurns, saveTurns, type ChatTurn } from '../memory/history.js';
 import { recall } from '../memory/long-term.js';
 import { memoryBackendName } from '../memory/redis.js';
+import { workspaceLayout } from '../workspace/paths.js';
 import { clearSessionApprovals } from '../runtime/confirm.js';
 import { withAskHandler } from '../runtime/ask.js';
-import { printAssistant, printProgress, printStatus, printUserPrompt, printZilMateBanner } from './format.js';
+import { printProgress } from './format.js';
 import { createReadlineConfirmation } from './confirm.js';
 import { createReadlineAskHandler } from './ask.js';
 import { checkVoiceRuntime, getVoiceConfig } from '../voice/deepgram.js';
 import { runTerminalVoiceLive } from './voice.js';
+import { printModelBrowser, runModelPicker } from './models.js';
+import { readComposerLine } from './composer.js';
+import { printAssistantTurn, printTips, printUserTurn, printWelcomeCard } from './render.js';
+import { theme } from './theme.js';
 
 function transcript(turns: ChatTurn[]) {
   if (turns.length === 0) return '';
@@ -29,23 +36,30 @@ function memoryBlock(memories: Awaited<ReturnType<typeof recall>>) {
 
 export async function startInteractiveChat(sessionId = 'default') {
   requireGatewayAuth();
+  await applyStoredModelSelections();
   clearSessionApprovals();
   let rl = readline.createInterface({ input, output });
   let turns = await loadTurns(sessionId);
   const runId = randomUUID();
   let voiceMode = false;
+  let modelBrowser = { provider: undefined as string | undefined, page: 1 };
+  const layout = workspaceLayout();
 
-  printZilMateBanner('Personal assistant CLI with subagents, tools, memory, and jobs.');
-  printStatus('Session:', sessionId);
-  printStatus('Memory:', memoryBackendName());
-  printStatus('Run:', runId);
-  console.log('Type /exit to quit, /clear to clear this session, /voice to start voice mode, /voice -q to stop voice mode, or /help for commands.\n');
+  printWelcomeCard({
+    cwd: process.cwd(),
+    sessionId,
+    model: models.manager,
+    workspace: layout.root,
+  });
+  printTips();
+  console.log(theme.muted(`Memory: ${memoryBackendName()} · Run: ${runId.slice(0, 8)}`));
+  console.log(theme.muted('Commands: /exit · /clear · /help · /voice · /model · /model pick\n'));
 
   try {
     while (true) {
       let answer: string;
       try {
-        answer = await rl.question(printUserPrompt());
+        answer = await readComposerLine(rl);
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         if (/readline was closed|aborted/i.test(message)) break;
@@ -55,7 +69,40 @@ export async function startInteractiveChat(sessionId = 'default') {
       if (!message) continue;
       if (message === '/exit' || message === '/quit') break;
       if (message === '/help') {
-        console.log('Commands: /exit, /quit, /clear, /help, /voice, /voice -q');
+        console.log(theme.textBright('Commands'));
+        console.log(`  ${theme.brand('/exit')}        Quit`);
+        console.log(`  ${theme.brand('/clear')}       Clear session history`);
+        console.log(`  ${theme.brand('/voice')}       Start live voice mode`);
+        console.log(`  ${theme.brand('/model')}       Browse AI Gateway models`);
+        console.log(`  ${theme.brand('/model pick')}  Choose manager/coding/image models`);
+        console.log(`  ${theme.brand('/model next')}  Next model page`);
+        continue;
+      }
+      if (message === '/model pick') {
+        try {
+          await runModelPicker();
+        } catch (error) {
+          console.log(error instanceof Error ? error.message : String(error));
+        }
+        continue;
+      }
+      if (message === '/model' || message.startsWith('/model ')) {
+        const rawQuery = message.slice('/model'.length).trim();
+        if (rawQuery === 'next') {
+          modelBrowser.page += 1;
+        } else if (rawQuery && rawQuery !== 'pick') {
+          modelBrowser = { provider: rawQuery, page: 1 };
+        }
+        try {
+          const result = await printModelBrowser({
+            ...(modelBrowser.provider ? { provider: modelBrowser.provider } : {}),
+            page: modelBrowser.page,
+            limit: 20,
+          });
+          modelBrowser.page = result.page;
+        } catch (error) {
+          console.log(error instanceof Error ? error.message : String(error));
+        }
         continue;
       }
       if (message === '/voice' || message === '/voice on') {
@@ -63,14 +110,14 @@ export async function startInteractiveChat(sessionId = 'default') {
         const checks = await checkVoiceRuntime();
         const failing = checks.filter((check) => !check.ok);
         if (!config.configured) {
-          console.log('Voice needs DEEPGRAM_API_KEY. Run `zilmate voice setup` first.');
+          console.log(theme.warn('Voice needs DEEPGRAM_API_KEY. Run `zilmate voice setup` first.'));
           continue;
         }
         if (failing.some((check) => check.name === 'Deepgram SDK')) {
-          console.log('Voice needs the Deepgram SDK installed. Run `npm install`, then `zilmate voice doctor`.');
+          console.log(theme.warn('Install Deepgram SDK: `npm install`, then `zilmate voice doctor`.'));
           continue;
         }
-        console.log(`Voice mode is starting. Model: ${config.listenModel} -> ${config.ttsModel}.`);
+        console.log(theme.text(`Voice mode · ${config.listenModel} → ${config.ttsModel}`));
         rl.close();
         try {
           const command = await runTerminalVoiceLive(sessionId);
@@ -84,15 +131,17 @@ export async function startInteractiveChat(sessionId = 'default') {
       }
       if (message === '/voice -q' || message === '/voice off' || message === '/voice stop') {
         voiceMode = false;
-        console.log('Voice mode is off for this chat session.');
+        console.log(theme.muted('Voice mode off for this chat session.'));
         continue;
       }
       if (message === '/clear') {
         turns = [];
         await saveTurns(sessionId, turns);
-        console.log('Session cleared.');
+        console.log(theme.ok('Session cleared.'));
         continue;
       }
+
+      printUserTurn(message);
 
       const context = transcript(turns);
       const relevantMemory = memoryBlock(await recall(message, 6));
@@ -110,7 +159,7 @@ export async function startInteractiveChat(sessionId = 'default') {
           confirm: createReadlineConfirmation(rl),
         }),
       );
-      printAssistant(response);
+      printAssistantTurn(response);
 
       turns.push(
         { role: 'user', content: message, createdAt: new Date().toISOString() },
@@ -122,6 +171,3 @@ export async function startInteractiveChat(sessionId = 'default') {
     rl.close();
   }
 }
-
-
-

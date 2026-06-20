@@ -12,7 +12,7 @@ const title = `ZilMate ${tag}`;
 
 const notes = `# ${title}
 
-ZilMate ${tag} — workspace-first assistant with merge setup, documents, skills.sh, heal, and richer CLI UX.
+ZilMate ${tag} — Claude-inspired CLI, situational awareness, session handoffs, model picker, and SDK docs.
 
 ## Install
 
@@ -20,24 +20,25 @@ ZilMate ${tag} — workspace-first assistant with merge setup, documents, skills
 npm install -g zilmate@${version}
 zilmate setup
 zilmate doctor --live
+zilmate talk
 \`\`\`
 
 ## Highlights
 
-- **Merge setup** — \`zilmate setup\` preserves existing \`.env\` values; only adds missing keys.
-- **ZilMate workspace** — \`~/Downloads/ZilMate\` with notebook, knowledge graph, skills, outputs, logs.
-- **PDF & slide decks** — \`generatePdf\` / \`generateSlideDeck\` tools (Kimi-style .pptx + reports).
-- **skills.sh ecosystem** — \`searchSkillsRegistry\` + \`installRegistrySkill\` via \`npx skills\`.
-- **Powerful heal** — two-pass session review: memory, contacts, projects, action items, friction log.
-- **Desktop notifications** — agent can toast the user when approval or attention is needed.
-- **CLI UX** — spinner while thinking, arrow/space selection for agent questions.
-- **QStash + Cloudflare** — optional tunnel during setup; \`zilmate jobs listen --tunnel\`.
+- **Beautiful CLI** — welcome card, tips, boxed composer input, Claude-style tool progress (\`● tool\` / \`└ Done\`).
+- **/model pick** — interactively choose manager, coding, image, and vision models; persisted to workspace \`config/models.json\`.
+- **Situational awareness** — \`getSituationBrief\` snapshots cwd, git, workspace, jobs, memory, models, and capabilities.
+- **Session continuity** — handoff save/load/generate so ZilMate resumes where you left off.
+- **Coding intelligence** — five tools: grep, working-tree review, symbol explain, scaffold, project checks; appBuilder + qaIntegration sub-coders.
+- **Image director** — \`enhanceImagePrompt\` + generation with art-direction presets.
+- **Cloudflare setup** — dedicated tunnel section in \`zilmate setup\`; \`zilmate jobs listen --tunnel\`.
+- **SDK.md** — Next.js App Router streaming route, subagents, jobs, voice, model selection.
 
 ## Quick Checks
 
 \`\`\`powershell
-zilmate workspace
-zilmate heal "session summary"
+zilmate talk
+/model pick
 zilmate jobs listen --tunnel
 \`\`\`
 

@@ -1,204 +1,186 @@
 ---
 name: zilmate
-description: Use when helping users understand, build, package, integrate, publish, or present ZilMate as a personal AI assistant, CLI, SDK, or app-embeddable assistant experience. Applies to product positioning, Next.js integration, npm package usage, assistant workflows, memory, research, content generation, and UI assistant design.
+description: Use when helping users understand, build, integrate, package, publish, test, or position ZilMate as a personal AI assistant, CLI, SDK, app-embeddable assistant, realtime voice assistant, automation worker, or tool-powered local/desktop agent. Applies to ZilMate CLI commands, zilmate/server SDK usage, Next.js/backend integration, voice mode, jobs and scheduling, Composio workflows, memory, desktop tools, image generation/editing, security/OSINT/pentest capabilities, npm releases, and product messaging.
 ---
 
 # ZilMate
 
-ZilMate is a personal AI assistant users can run from the terminal, call from server-side application code, or embed behind a custom chat interface. Treat it as an assistant product, not just a command wrapper. Its value is that it gives people a practical assistant they can bring into their day: asking questions, researching, drafting, organizing context, remembering useful facts, generating assets, and coordinating multi-step work from one reliable interface.
+ZilMate is a personal AI assistant that can live in the terminal, run behind server-side app routes, and power custom assistant UIs. Treat it as an assistant runtime with real tools, not as a simple chatbot. It can talk, listen, remember, research, use connected apps, work with local files, schedule jobs, inspect desktop context, generate and edit images, and delegate focused work to specialist subagents.
 
-## Core Positioning
+Do not describe ZilMate as tied to another product unless the user explicitly asks about that product. Keep the framing broad: ZilMate is the assistant layer.
+
+## Product Positioning
 
 Describe ZilMate as:
 
-- A personal assistant for everyday work, planning, writing, research, and operational tasks.
-- A developer-friendly assistant runtime with both a CLI and a server-side SDK.
-- A bridge between conversational help and real actions, with support for tools, memory, research, content creation, and app integration.
-- A package that teams can install, extend, and surface inside their own products.
+- A personal assistant for daily planning, writing, research, development, automation, and local desktop work.
+- A CLI-first assistant with polished setup, diagnostics, menu flows, memory, jobs, voice, and tool access.
+- A server-side SDK developers can import into apps, dashboards, internal tools, and custom chat experiences.
+- A bridge between conversation and action: it can call tools, use subagents, save state, and return structured results.
+- A package that can be extended with app connectors, local tools, workflows, and product-specific UI.
 
-Avoid describing ZilMate as only a chatbot. The stronger framing is an assistant layer: it talks, remembers, researches, prepares outputs, calls tools, and can be embedded into user-facing software.
+Avoid vague claims like "all-in-one AI platform" or "just a wrapper." Lead with concrete things ZilMate can do.
 
-Do not mention other products or unrelated project names when explaining ZilMate unless the user explicitly asks for a comparison.
+## Current Surfaces
 
-## What Makes ZilMate Powerful
+- `zilmate` / `zilmate talk`: interactive terminal assistant.
+- `zilmate menu`: guided CLI menu for setup, chat, jobs, health, apps, and memory.
+- `zilmate voice live`: realtime microphone conversation with spoken replies.
+- `zilmate jobs ...`: persistent jobs, schedules, logs, worker, and API-first automation.
+- `zilmate setup`: guided setup for keys, voice, jobs, Composio, QStash, desktop features, and optional tools.
+- `zilmate doctor`: health checks for keys, tools, models, package state, and feature readiness.
+- `zilmate/server`: server-side SDK for apps, backend routes, Next.js API routes, hosted workers, and custom UIs.
+- `zilmate/cli`: terminal-oriented entry behavior.
+- `zilmate/edge`: future direction for Deno/Supabase-style HTTP-safe adapters.
 
-ZilMate is powerful because it combines several assistant capabilities into one package:
+Keep browser/client guidance server-safe: browser UIs should call an app-owned API route that imports `zilmate/server`; do not put secrets or private runtime code in client components.
 
-- **CLI access:** Users can talk to ZilMate directly from the terminal for quick help, checks, commands, and assistant workflows.
-- **Server SDK:** Developers can import ZilMate into server-side code and wire it into apps, dashboards, internal tools, or custom chat interfaces.
-- **Personal context:** ZilMate can use memory patterns to remember useful facts, preferences, and repeated context across sessions.
-- **Research workflows:** It can support deeper answers by gathering and synthesizing information instead of only relying on a single prompt.
-- **Content generation:** It can help draft posts, guides, replies, summaries, plans, and structured outputs.
-- **Image and asset workflows:** When configured, it can generate image assets for creative or product workflows.
-- **Mode-based assistance:** ZilMate can expose focused modes such as chat, quick help, research, posting, planning, or asset generation.
-- **App-ready architecture:** The SDK lets builders place ZilMate behind a Next.js route, API endpoint, or custom assistant UI.
+## What Makes It Powerful
 
-## When Users Ask What ZilMate Is
+ZilMate combines these layers:
 
-Give a clear answer like:
+- **Realtime voice:** Deepgram Flux-style listening plus spoken replies, with shared text/voice session behavior when launched from chat.
+- **Long-term memory:** User-owned facts, preferences, and useful working context.
+- **Background jobs:** Local worker, scheduled tasks, logs/status APIs, and optional hosted scheduling through QStash/webhooks.
+- **Composio connectors:** Connected-app actions and trigger-to-workflow handlers for apps such as Gmail, Calendar, Slack, Notion, GitHub, Linear, Discord, Supabase, Stripe, and other supported integrations.
+- **Desktop tools:** Clipboard, screenshots, screenshot analysis, camera/photo capture, file/app launching, keyboard automation, system info, and running app inspection.
+- **File tools:** Search, read/write, move/copy/rename, create folders, metadata, summaries, duplicate/large-file checks, watch-style folder checks, and safe deletion with confirmation.
+- **Shell tools:** Run shell/PowerShell commands, scripts, package installs, build/test commands, pipelines, and system checks when the user approves the working context.
+- **Computer-use tools:** Screen reading, mouse/keyboard actions, window management, drag/drop, and UI interaction for local automation.
+- **Image tools:** Generate new images or edit existing images using OpenAI or Gemini models. Accept local image paths, image URLs, and optional masks, then save outputs locally.
+- **Research tools:** Docs and web research, with source-aware summaries when current information matters.
+- **Specialist subagents:** Chat, research, post writing, image work, automation planning, personal assistance, developer help, coding, goal management, and security.
 
-> ZilMate is a personal AI assistant you can use from the command line or embed into your own app. It helps with chat, research, writing, planning, memory, and tool-powered workflows, while giving developers an SDK so they can build their own assistant UI around it.
+## Security Agent
 
-Keep the explanation user-centered. Emphasize what it helps them do before explaining implementation details.
+ZilMate includes a permission-aware security subagent for authorized work only.
 
-## CLI Guidance
+Capabilities include:
 
-Use the CLI when the user wants:
+- OSINT investigation for usernames, emails, phones, domains, metadata, public records, and network intelligence.
+- OSINT tool checking and setup through install/check helpers.
+- Pentest workflows such as subdomain discovery, HTTP probing, port scanning, template-based vulnerability checks, fuzzing, and SQL injection testing.
+- Output capture under `outputs/osint/` and `outputs/pentest/`.
 
-- A direct personal assistant in the terminal.
-- Quick checks, setup diagnostics, or local workflows.
-- A globally installed assistant command.
-- A developer tool that can be used without building a UI.
+Rules for using or describing security features:
 
-Common CLI guidance:
-
-```powershell
-npm install -g zilmate
-zilmate --help
-zilmate ping
-zilmate doctor
-zilmate talk
-```
-
-If a user sees an npm 404 while installing, explain that the package name must exist on npm first, the user must have access to it, and the package must have been published successfully. If publishing has succeeded, advise them to retry the global install from a fresh terminal.
+- Always require user authorization for active scanning, exploitation-style testing, or testing third-party targets.
+- Prefer passive OSINT when permission is unclear.
+- Ask for explicit target scope before running active tools.
+- Mention that sensitive actions use confirmation prompts and should be run only on systems the user owns or is allowed to test.
+- Do not present ZilMate as a stealth, evasion, or abuse tool.
 
 ## SDK Guidance
 
-Use the SDK when the user wants:
+Use `zilmate/server` when the user wants:
 
-- ZilMate inside a website, dashboard, mobile backend, or custom app.
-- A custom chat UI.
-- Server-side control over sessions, modes, prompts, auth, rate limits, and logging.
-- A reusable assistant layer in a Next.js application.
+- A custom web or mobile chat UI.
+- A Next.js, Vercel, Railway, Express, or backend-hosted assistant route.
+- Server-side control over sessions, auth, tools, memory, logs, and environment variables.
+- Hosted workflows, webhooks, or app-triggered jobs.
 
-Recommended framing:
-
-- The CLI is for users and developers who want ZilMate directly.
-- The SDK is for builders who want to put ZilMate inside their own product.
-- A polished product should usually have both.
-
-Typical server-side import:
-
-```ts
-import { createZilMate } from "zilmate/server";
-```
-
-Typical Next.js route shape:
+Typical pattern:
 
 ```ts
 import { createZilMate } from "zilmate/server";
 
 export async function POST(request: Request) {
   const body = await request.json();
-  const zilmate = createZilMate({
-    sessionId: body.sessionId,
-  });
-
+  const zilmate = createZilMate({ sessionId: body.sessionId });
   const result = await zilmate.chat(body.message);
-  return Response.json({ result });
+  return Response.json(result);
 }
 ```
 
-Keep SDK examples server-side. Do not encourage importing private assistant runtime code directly into browser components. Browser UIs should call an app-owned API route.
+For production UIs:
 
-## Next.js Integration Pattern
+- Keep API keys in server environment variables.
+- Let the frontend send messages, session IDs, selected mode, and attachments.
+- Return structured assistant output, progress events, tool summaries, job IDs, and errors.
+- For realtime voice in web apps, design a browser voice route separately; the local `zilmate voice live` command is terminal/desktop-oriented.
 
-For Next.js apps, recommend this structure:
+## CLI Guidance
 
-- `app/api/zilmate/route.ts` owns the server-side ZilMate call.
-- Client components render the chat UI and call that route.
-- Secrets stay in `.env.local` or server-only environment variables.
-- The UI sends `message`, `mode`, and `sessionId`.
-- The API returns a structured assistant result, optional progress events, and optional metadata.
+Common commands:
 
-Good UI modes:
+```powershell
+npm install -g zilmate
+zilmate
+zilmate menu
+zilmate setup
+zilmate doctor
+zilmate talk
+zilmate voice doctor
+zilmate voice live
+zilmate jobs
+zilmate jobs worker
+zilmate update
+```
 
-- Chat
-- Quick Help
-- Research
-- Writing
-- Planning
-- Image or Asset Generation
+When users ask how updates work, explain that npm-installed users update through the package manager, while the CLI can offer a friendlier `zilmate update` flow that checks the latest npm version and runs the right install command.
 
-For a high-quality assistant UI, include:
+When users ask whether it works on Windows, macOS, and Linux, answer by feature:
 
-- Conversation history.
-- Streaming or progress states when available.
-- Mode switching.
-- Clear empty states.
-- Mobile-first composer.
-- Session continuity.
-- Error states written in plain language.
+- Core CLI, SDK, jobs, memory, and app connectors should be cross-platform.
+- Desktop, screenshot, clipboard, camera, audio, shell, and computer-use features depend on OS tools and setup.
+- The setup wizard and doctor should detect missing dependencies and guide the user instead of failing silently.
 
-## Product Language
+## Voice Guidance
 
-Use confident, concrete language:
+Voice mode should be described as a realtime assistant experience, not a record-then-transcribe flow.
 
-- "ZilMate helps you think, write, research, and act from one assistant."
-- "ZilMate can live in the terminal or inside your app."
-- "Developers can build their own assistant UI around the ZilMate SDK."
-- "The CLI gives immediate access; the SDK makes it product-ready."
-- "ZilMate is strongest when it combines memory, tools, research, and a focused user experience."
+Expected behavior:
 
-Avoid vague phrases like:
+- `zilmate voice live` starts listening from the terminal and speaks back.
+- `/voice` inside `zilmate talk` starts voice mode from the current chat session.
+- `/voice -q` stops voice mode and returns to typed chat.
+- `/talk` inside standalone voice mode can switch into typed chat where supported.
+- Voice answers should know they are in voice mode, avoid markdown-heavy output, and speak concise responses.
+- Voice should share useful session context with text chat when launched from the same talk session.
 
-- "AI-powered solution"
-- "revolutionary assistant"
-- "all-in-one platform"
-- "just a wrapper"
-- "simple chatbot"
+## Jobs And Automation
 
-## Feature Recommendations
+ZilMate jobs are for persistent automation:
 
-When asked what ZilMate is lacking or what to build next, prioritize features that make it feel like a complete assistant product:
+- `zilmate jobs create "<task>"`
+- `zilmate jobs list`
+- `zilmate jobs status <id>`
+- `zilmate jobs logs <id>`
+- `zilmate jobs run <id>`
+- `zilmate jobs worker`
+- `zilmate jobs cancel <id>`
 
-- First-run onboarding that explains CLI setup, auth, and common commands.
-- Durable memory controls: remember, list, edit, forget, clear.
-- Session history and named conversations.
-- Tool permission prompts for sensitive actions.
-- Streaming responses and progress events.
-- A polished embeddable chat UI.
-- Next.js starter route and component examples.
-- SDK docs with typed examples.
-- Provider and model configuration docs.
-- Error handling with clear recovery steps.
-- Publish and install docs for npm users.
-- Templates for common modes: chat, research, writing, support, planning, image.
+Clarify the runtime model:
 
-## Build Guidance
+- Local jobs keep running after chat closes while the machine is awake and online.
+- Local jobs do not keep running if the laptop sleeps, shuts down, or loses internet.
+- Hosted always-on behavior needs a deployed worker plus webhook/QStash delivery.
+- QStash gives durable callbacks only when a public endpoint is running.
 
-When building ZilMate features:
+## Setup Guidance
 
-- Keep the CLI, SDK, and UI aligned around the same core assistant behavior.
-- Prefer typed public APIs over exposing internal implementation files.
-- Keep secrets server-side.
-- Make modes explicit and easy to extend.
-- Return structured results from SDK methods so UIs can render reliably.
-- Include smoke tests for install, build, API route behavior, and mobile layout when building an app.
-- Document both local development and npm-installed usage.
+The setup experience should be guided and skippable:
 
-## Security And Trust
+- Explain what keys or services the user may need before setup starts.
+- Let users say yes/no to optional features such as Composio, QStash, voice, camera, desktop tools, and security tooling.
+- Mask secret input.
+- Write local configuration into ZilMate's workspace/config files rather than requiring manual `.env` edits.
+- Run a doctor check after setup and give specific next commands.
 
-For user trust:
-
-- Never expose API keys in client code.
-- Treat memory as user-owned data with visible controls.
-- Ask before destructive or external actions.
-- Make tool usage understandable to the user.
-- Prefer clear failure messages over silent fallback behavior.
-- Log enough for debugging without storing sensitive user content unnecessarily.
+Never ask users to paste secrets into normal chat. Send them through setup or documented environment configuration.
 
 ## Answer Style
 
-When answering questions about ZilMate:
+When answering ZilMate questions:
 
 - Be direct and product-minded.
-- Explain benefits first, then implementation.
-- Recommend both CLI and SDK when the user is building a serious assistant product.
-- When the user asks to build, proceed with concrete file changes and verification.
-- When the user asks for positioning, write in crisp product language.
-- Keep ZilMate framed as a personal assistant that can become part of a user interface.
+- Benefits first, implementation second.
+- Recommend CLI plus SDK for a serious assistant product.
+- Distinguish local desktop features from hosted server features.
+- For security features, emphasize authorization and scope.
+- For app integration, keep secrets server-side.
+- When asked to build, make the code changes and verify with build/tests.
 
 ## Useful One-Liner
 
-ZilMate is a personal AI assistant for chat, research, writing, memory, and tool-powered work, available as both a CLI and a server-side SDK for custom app experiences.
+ZilMate is a personal AI assistant runtime with CLI, SDK, realtime voice, memory, jobs, app connectors, local desktop tools, image generation/editing, and specialist subagents for getting real work done.
