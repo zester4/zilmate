@@ -1,9 +1,9 @@
 import { createZilMate } from '../server.js';
-import { env, hasChatIntegration } from '../config/env.js';
+import { env } from '../config/env.js';
 import { emitProgress } from './progress.js';
 
 /**
- * The ChatBridge provides a high-level integration between external chat platforms
+ * The ChatBridge provides a high-level integration between external chat adapters
  * (Slack, Telegram, etc.) and the ZilMate Manager.
  */
 export async function handleChatMessage(input: {
@@ -102,9 +102,6 @@ export async function pushChatNotification(input: {
   }
 
   if (input.platform === 'imessage') {
-    // iMessage usually requires the @vercel/chat adapter to be active
-    // because it handles the macOS database bridge.
-    // We log it here for diagnostic visibility.
     console.log(`[ChatBridge] iMessage push requested for ${input.recipientId}. Ensure 'zilmate chat listen' is running.`);
     return { ok: true, platform: 'imessage', note: 'Queued via adapter' };
   }

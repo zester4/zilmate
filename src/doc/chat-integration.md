@@ -1,6 +1,6 @@
 # ZilMate Chat Integration Guide
 
-ZilMate is now a fully multi-channel agent. You can communicate with it via **Slack**, **Telegram**, **iMessage**, and the **Terminal** simultaneously, with a unified brain and persistent memory.
+ZilMate is now a fully multi-channel assistant. You can communicate with it via **Slack**, **Telegram**, **iMessage**, and the **Terminal** simultaneously, with a unified brain and persistent memory.
 
 ## 1. Professional Setup & Diagnostics
 
@@ -62,6 +62,6 @@ The integration is built on the [Chat SDK](https://github.com/vercel/chat), prov
 You have 100% feature parity.
 *   **Terminal:** Use `zilmate talk` for deep work.
 *   **Chat:** Use Telegram/Slack for mobile access and alerts.
-*   **SDK:** Use `createZilMate()` to build custom UI integrations.
+*   **SDK:** Use `createZilMate()` from `zilmate/server` to build custom UI integrations.
 
 All interfaces share the same **Workspace Memory**, ensuring ZilMate stays smart regardless of where you talk to it.
