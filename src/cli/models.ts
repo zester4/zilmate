@@ -27,35 +27,26 @@ function modelFamily(modelId: string) {
   if (/claude/i.test(modelId)) return 'Claude';
   if (/grok/i.test(modelId)) return 'Grok';
   if (/mistral|mixtral/i.test(modelId)) return 'Mistral';
+  if (/qwen/i.test(modelId)) return 'Qwen';
   return name.split('-')[0]?.toUpperCase() || 'Model';
 }
 
 function roleForModel(modelId: string) {
   const selected = Object.entries(models)
-    .filter(([key, value]) => key !== 'imageDefaultProvider' && value === modelId)
+    .filter(([key, value]) => !['imageDefaultProvider', 'image'].includes(key) && value === modelId)
     .map(([key]) => key);
   return selected.length ? selected.join(', ') : '-';
 }
 
-function filterModels(ids: string[], provider?: string) {
-  const query = provider?.toLowerCase().trim();
-  if (!query) return ids;
-  return ids.filter((id) => id.toLowerCase().includes(query) || providerOf(id).toLowerCase() === query);
+function filterModels(ids: string[], query?: string) {
+  const q = query?.toLowerCase().trim();
+  if (!q) return ids;
+  return ids.filter((id) => id.toLowerCase().includes(q) || providerOf(id).toLowerCase() === q);
 }
 
-function currentModelForRole(role: ModelRole) {
-  const map: Record<ModelRole, string> = {
-    manager: models.manager,
-    coding: models.coding,
-    help: models.help,
-    post: models.post,
-    research: models.research,
-    chat: models.chat,
-    imageOpenai: models.imageOpenai,
-    imageGemini: models.imageGemini,
-    screenshotVision: models.screenshotVision,
-  };
-  return map[role];
+function currentModelForRole(role: ModelRole): string {
+  const val = models[role as keyof typeof models];
+  return typeof val === 'string' ? val : 'unknown';
 }
 
 export async function printModelBrowser(options: ModelListOptions = {}) {
@@ -98,38 +89,53 @@ export async function printModelBrowser(options: ModelListOptions = {}) {
   return { page, limit, total: filtered.length, totalPages, provider: options.provider || 'all' };
 }
 
-export async function runModelPicker() {
+export async function runModelPicker(query?: string) {
   const availability = await getModelAvailability();
+
+  // 1. Filter models if a query (provider name) was provided
+  const availableIds = filterModels(availability.availableIds, query);
+
+  if (availableIds.length === 0) {
+    console.log(theme.error(`No models found matching "${query}"`));
+    return null;
+  }
+
+  // 2. Choose Role
   const roleChoice = await selectOne('Choose which agent role to configure', roleLabels().map((item) => ({
     id: item.role,
     label: item.label,
     description: `Current: ${currentModelForRole(item.role)}`,
   })), 0);
+
   if (!roleChoice) {
     console.log(theme.muted('Model selection cancelled.'));
     return null;
   }
 
-  const modelsForRole = filterModels(availability.availableIds).slice(0, 40);
+  // 3. Choose Model (with pagination support automatically from prompt.ts)
   const modelChoice = await selectOne(
-    `Choose a model for ${roleChoice.label}`,
-    modelsForRole.map((id) => ({
+    `Choose a model for ${roleChoice.label}${query ? ` (Filtered by ${query})` : ''}`,
+    availableIds.map((id) => ({
       id,
       label: id,
       description: modelFamily(id),
     })),
-    Math.max(0, modelsForRole.findIndex((id) => id === currentModelForRole(roleChoice.id as ModelRole))),
+    Math.max(0, availableIds.findIndex((id) => id === currentModelForRole(roleChoice.id as ModelRole))),
+    15 // Page size
   );
+
   if (!modelChoice) {
     console.log(theme.muted('Model selection cancelled.'));
     return null;
   }
 
   await saveModelSelection(roleChoice.id as ModelRole, modelChoice.id);
+
   printPanel('Model updated', [
     ['Role', roleChoice.label],
     ['Model', modelChoice.id],
     ['Tip', 'Selection saved to workspace config and applied for this session'],
   ]);
+
   return { role: roleChoice.id, model: modelChoice.id };
 }

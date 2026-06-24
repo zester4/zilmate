@@ -76,7 +76,7 @@ export async function startInteractiveChat(sessionId = 'default') {
         console.log(`  ${theme.brand('/swarm')}       Launch Digital Corporation task`);
         console.log(`  ${theme.brand('/voice')}       Start live voice mode`);
         console.log(`  ${theme.brand('/model')}       Browse AI Gateway models`);
-        console.log(`  ${theme.brand('/model pick')}  Choose manager/coding/image models`);
+        console.log(`  ${theme.brand('/model pick')} [query]  Choose models (filtered by provider)`);
         console.log(`  ${theme.brand('/model next')}  Next model page`);
         continue;
       }
@@ -89,9 +89,9 @@ export async function startInteractiveChat(sessionId = 'default') {
         await runSwarmCli(swarmTask, { session: sessionId });
         continue;
       }
-      if (message === '/model pick') {
+      if (message === '/model pick' || message.startsWith('/model pick ')) {
         try {
-          await runModelPicker();
+          const pickQuery = message.slice('/model pick'.length).trim(); await runModelPicker(pickQuery || undefined);
         } catch (error) {
           console.log(error instanceof Error ? error.message : String(error));
         }

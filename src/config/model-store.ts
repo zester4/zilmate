@@ -1,4 +1,3 @@
-// src/config/model-store.ts
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
@@ -13,7 +12,14 @@ export type ModelRole =
   | 'chat'
   | 'imageOpenai'
   | 'imageGemini'
-  | 'screenshotVision';
+  | 'screenshotVision'
+  | 'deptStrategy'
+  | 'deptEngineering'
+  | 'deptGrowth'
+  | 'deptOperations'
+  | 'deptData'
+  | 'deptSecurity'
+  | 'deptRevenue';
 
 export type ModelSelectionStore = {
   roles: Partial<Record<ModelRole, string>>;
@@ -30,6 +36,13 @@ const roleEnvMap: Record<ModelRole, string> = {
   imageOpenai: 'ZILO_IMAGE_OPENAI_MODEL',
   imageGemini: 'ZILO_IMAGE_GEMINI_MODEL',
   screenshotVision: 'ZILMATE_SCREENSHOT_MODEL',
+  deptStrategy: 'ZILMATE_DEPT_STRATEGY_MODEL',
+  deptEngineering: 'ZILMATE_DEPT_ENGINEERING_MODEL',
+  deptGrowth: 'ZILMATE_DEPT_GROWTH_MODEL',
+  deptOperations: 'ZILMATE_DEPT_OPERATIONS_MODEL',
+  deptData: 'ZILMATE_DEPT_DATA_MODEL',
+  deptSecurity: 'ZILMATE_DEPT_SECURITY_MODEL',
+  deptRevenue: 'ZILMATE_DEPT_REVENUE_MODEL',
 };
 
 function storePath() {
@@ -74,5 +87,12 @@ export function roleLabels(): Array<{ role: ModelRole; label: string; envKey: st
     { role: 'imageOpenai', label: 'OpenAI image model', envKey: roleEnvMap.imageOpenai },
     { role: 'imageGemini', label: 'Gemini image model', envKey: roleEnvMap.imageGemini },
     { role: 'screenshotVision', label: 'Screenshot / vision', envKey: roleEnvMap.screenshotVision },
+    { role: 'deptStrategy', label: 'Strategy Department', envKey: roleEnvMap.deptStrategy },
+    { role: 'deptEngineering', label: 'Engineering Department', envKey: roleEnvMap.deptEngineering },
+    { role: 'deptGrowth', label: 'Growth Department', envKey: roleEnvMap.deptGrowth },
+    { role: 'deptOperations', label: 'Operations Department', envKey: roleEnvMap.deptOperations },
+    { role: 'deptData', label: 'Data Department', envKey: roleEnvMap.deptData },
+    { role: 'deptSecurity', label: 'Security Department', envKey: roleEnvMap.deptSecurity },
+    { role: 'deptRevenue', label: 'Revenue Department', envKey: roleEnvMap.deptRevenue },
   ];
 }

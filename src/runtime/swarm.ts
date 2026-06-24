@@ -1,4 +1,4 @@
-﻿import { type Tool, ToolLoopAgent, stepCountIs, tool } from 'ai';
+import { type Tool, ToolLoopAgent, stepCountIs, tool } from 'ai';
 import { z } from 'zod';
 import { models } from '../config/models.js';
 import { limits } from '../safety/limits.js';
@@ -23,6 +23,18 @@ export class SwarmAgent {
 
   constructor(private config: SwarmAgentConfig) {}
 
+  private getDeptModel(): string {
+    const dept = this.config.department;
+    if (dept === 'Strategy') return models.deptStrategy;
+    if (dept === 'Engineering') return models.deptEngineering;
+    if (dept === 'Growth') return models.deptGrowth;
+    if (dept === 'Operations') return models.deptOperations;
+    if (dept === 'Data') return models.deptData;
+    if (dept === 'Security') return models.deptSecurity;
+    if (dept === 'Revenue') return models.deptRevenue;
+    return models.chat;
+  }
+
   async init(sessionId: string = 'default') {
     const composioTools = await createComposioTools(sessionId);
 
@@ -30,7 +42,7 @@ export class SwarmAgent {
     const deptRunId = `${sessionId}:${this.config.department.toLowerCase()}`;
 
     this.agent = new ToolLoopAgent({
-      model: models.chat,
+      model: this.getDeptModel(),
       instructions: [
         `You are ${this.config.name}, in the ${this.config.department} department.`,
         `SESSION CONTEXT: Your current departmental session is "${deptRunId}".`,

@@ -1,4 +1,4 @@
-﻿import { gateway } from 'ai';
+import { gateway } from 'ai';
 import { env, type ImageProvider } from './env.js';
 
 export type ModelRegistry = {
@@ -13,12 +13,21 @@ export type ModelRegistry = {
   imageGemini: string;
   image: string;
   screenshotVision: string;
+
+  // Department specific models
+  deptStrategy: string;
+  deptEngineering: string;
+  deptGrowth: string;
+  deptOperations: string;
+  deptData: string;
+  deptSecurity: string;
+  deptRevenue: string;
 };
 
 const cheapModelCandidates = [
-  'openai/gpt-5.4-mini',
-  'google/gemini-3-flash',
-  'xai/grok-4.1-fast',
+  'openai/gpt-4o-mini',
+  'google/gemini-2.0-flash-lite-preview-02-05',
+  'xai/grok-2-1212',
   'mistral/mistral-small-latest',
 ];
 
@@ -38,6 +47,15 @@ export const models: ModelRegistry = {
   get imageGemini() { return pick(env.imageGeminiModel, 'ZILO_IMAGE_GEMINI_MODEL'); },
   get image() { return env.imageDefaultProvider === 'gemini' ? models.imageGemini : models.imageOpenai; },
   get screenshotVision() { return pick(env.screenshotVisionModel, 'ZILMATE_SCREENSHOT_MODEL'); },
+
+  // Getters for department models with fallbacks
+  get deptStrategy() { return pick(process.env.ZILMATE_DEPT_STRATEGY_MODEL || '', 'ZILMATE_DEPT_STRATEGY_MODEL', env.managerModel); },
+  get deptEngineering() { return pick(process.env.ZILMATE_DEPT_ENGINEERING_MODEL || '', 'ZILMATE_DEPT_ENGINEERING_MODEL', env.managerModel); },
+  get deptGrowth() { return pick(process.env.ZILMATE_DEPT_GROWTH_MODEL || '', 'ZILMATE_DEPT_GROWTH_MODEL', env.managerModel); },
+  get deptOperations() { return pick(process.env.ZILMATE_DEPT_OPERATIONS_MODEL || '', 'ZILMATE_DEPT_OPERATIONS_MODEL', env.managerModel); },
+  get deptData() { return pick(process.env.ZILMATE_DEPT_DATA_MODEL || '', 'ZILMATE_DEPT_DATA_MODEL', env.managerModel); },
+  get deptSecurity() { return pick(process.env.ZILMATE_DEPT_SECURITY_MODEL || '', 'ZILMATE_DEPT_SECURITY_MODEL', env.managerModel); },
+  get deptRevenue() { return pick(process.env.ZILMATE_DEPT_REVENUE_MODEL || '', 'ZILMATE_DEPT_REVENUE_MODEL', env.managerModel); },
 };
 
 export type ModelAvailability = {
@@ -54,9 +72,26 @@ export async function getModelAvailability(): Promise<ModelAvailability> {
     .map((model) => typeof model === 'string' ? model : (model as { id?: string }).id)
     .filter((id): id is string => Boolean(id));
 
-  const selected = Object.entries(models)
-    .filter(([key]) => key !== 'imageDefaultProvider')
-    .map(([, value]) => value);
+  // Get current values from the registry
+  const selected = [
+    models.manager,
+    models.help,
+    models.post,
+    models.chat,
+    models.research,
+    models.coding,
+    models.imageOpenai,
+    models.imageGemini,
+    models.screenshotVision,
+    models.deptStrategy,
+    models.deptEngineering,
+    models.deptGrowth,
+    models.deptOperations,
+    models.deptData,
+    models.deptSecurity,
+    models.deptRevenue,
+  ];
+
   const missing = selected.filter((id, index) => selected.indexOf(id) === index && !availableIds.includes(id));
   const warnings = missing.map((id) => `Configured model not reported by Gateway: ${id}`);
 
