@@ -524,7 +524,7 @@ export async function runVoiceSetup(options: Pick<SetupOptions, 'path' | 'force'
     console.log(chalk.gray('Defaults use Deepgram Flux V2 for fast listening and Aura-2 for spoken replies.'));
 
     if (existing.size > 0 && !options.force) {
-      const update = await askYesNo(rl, \ clouds${envPath} already exists. Update voice settings?`, true);
+      const update = await askYesNo(rl, `${envPath} already exists. Update voice settings?`, true);
       if (!update) {
         console.log(chalk.yellow('Voice setup cancelled. Existing .env was left unchanged.'));
         return;

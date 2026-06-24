@@ -1,4 +1,4 @@
-import { createZilMate } from '../index.js';
+import { createZilMate } from '../server.js';
 import { env, hasChatIntegration } from '../config/env.js';
 import { emitProgress } from './progress.js';
 
