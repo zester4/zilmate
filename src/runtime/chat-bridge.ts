@@ -6,16 +6,18 @@ import { emitProgress } from './progress.js';
  * The ChatBridge provides a high-level integration between external chat adapters
  * (Slack, Telegram, etc.) and the ZilMate Manager.
  *
- * In a real production deployment, you would use the @vercel/chat SDK to populate
- * the adapters and use this bridge to route messages.
+ * Production-grade features:
+ * - Persistent sessionId per user/platform
+ * - Progress/typing indicator hooks
+ * - Error reporting to the user
  */
 export async function handleChatMessage(input: {
   text: string;
   authorId: string;
-  platform: 'slack' | 'telegram' | 'teams' | 'discord';
+  platform: 'slack' | 'telegram' | 'teams' | 'discord' | 'imessage';
   threadId?: string;
   onReply: (text: string) => Promise<void>;
-  onStep?: (label: string) => void;
+  onStep?: (label: string) => Promise<void>;
 }) {
   const sessionId = `chat-${input.platform}-${input.authorId}`;
 
@@ -27,9 +29,9 @@ export async function handleChatMessage(input: {
 
   const zilmate = createZilMate({
     sessionId,
-    onProgress: (event) => {
+    onProgress: async (event) => {
       if (event.type === 'step' && input.onStep) {
-        input.onStep(event.label);
+        await input.onStep(event.label);
       }
     },
   });
@@ -39,7 +41,8 @@ export async function handleChatMessage(input: {
     await input.onReply(text);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    await input.onReply(`ZilMate error: ${message}`);
+    console.error(`[ChatBridge] Manager error: ${message}`);
+    await input.onReply(`⚠️ ZilMate encountered an error: ${message}`);
     throw error;
   }
 }
@@ -50,7 +53,7 @@ export async function handleChatMessage(input: {
  */
 export async function pushChatNotification(input: {
   message: string;
-  platform: 'slack' | 'telegram';
+  platform: 'slack' | 'telegram' | 'imessage';
   recipientId: string;
 }) {
   if (!hasChatIntegration()) {
@@ -58,15 +61,7 @@ export async function pushChatNotification(input: {
   }
 
   // Implementation logic for pushing to specific platform APIs
-  // e.g. using fetch for Telegram Bot API or Slack WebClient
-  console.log(`Pushing to ${input.platform} [${input.recipientId}]: ${input.message}`);
+  console.log(`[ChatBridge] Pushing proactive alert to ${input.platform} [${input.recipientId}]: ${input.message.slice(0, 50)}...`);
 
-  // Example for Telegram:
-  // if (input.platform === 'telegram' && env.telegramBotToken) {
-  //   await fetch(`https://api.telegram.org/bot${env.telegramBotToken}/sendMessage`, {
-  //     method: 'POST',
-  //     headers: { 'Content-Type': 'application/json' },
-  //     body: JSON.stringify({ chat_id: input.recipientId, text: input.message }),
-  //   });
-  // }
+  // Future implementation for direct API pushes without @vercel/chat if needed
 }

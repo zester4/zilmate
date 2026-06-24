@@ -54,6 +54,8 @@ export type Env = {
   slackBotToken: string | undefined;
   slackSigningSecret: string | undefined;
   telegramBotToken: string | undefined;
+  imessageLocal: boolean;
+  imessageEnabled: boolean;
   chatIntegrationEnabled: boolean;
 };
 
@@ -96,6 +98,8 @@ export const env: Env = {
   slackBotToken: process.env.SLACK_BOT_TOKEN,
   slackSigningSecret: process.env.SLACK_SIGNING_SECRET,
   telegramBotToken: process.env.TELEGRAM_BOT_TOKEN,
+  imessageLocal: process.env.IMESSAGE_LOCAL === 'true',
+  imessageEnabled: process.env.CHAT_IMESSAGE_ENABLED === 'true',
   chatIntegrationEnabled: process.env.CHAT_INTEGRATION_ENABLED === 'true',
 };
 
@@ -149,5 +153,5 @@ export function requireDeepgram() {
 }
 
 export function hasChatIntegration() {
-  return env.chatIntegrationEnabled && (Boolean(env.slackBotToken) || Boolean(env.telegramBotToken));
+  return env.chatIntegrationEnabled && (Boolean(env.slackBotToken) || Boolean(env.telegramBotToken) || Boolean(env.imessageEnabled));
 }

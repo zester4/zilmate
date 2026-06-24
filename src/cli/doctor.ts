@@ -68,6 +68,7 @@ export function getConfigSummary() {
       chatEnabled: env.chatIntegrationEnabled,
       slackToken: Boolean(env.slackBotToken),
       telegramToken: Boolean(env.telegramBotToken),
+      imessageLocal: env.imessageLocal,
     },
     memory: {
       backend: memoryBackendName(),
@@ -165,8 +166,8 @@ export async function runDoctor(options: { live?: boolean; sessionId?: string } 
     status: env.chatIntegrationEnabled ? hasChatIntegration() ? 'pass' : 'fail' : 'warn',
     detail: env.chatIntegrationEnabled
       ? hasChatIntegration()
-        ? `Chat enabled: ${env.slackBotToken ? 'Slack ' : ''}${env.telegramBotToken ? 'Telegram' : ''}`
-        : 'Chat is enabled but both SLACK_BOT_TOKEN and TELEGRAM_BOT_TOKEN are missing'
+        ? `Chat enabled: ${env.slackBotToken ? 'Slack ' : ''}${env.telegramBotToken ? 'Telegram ' : ''}${env.imessageEnabled ? 'iMessage' : ''}`
+        : 'Chat is enabled but no channel tokens are configured (Slack/Telegram/iMessage)'
       : 'External chat channels are disabled',
   });
 

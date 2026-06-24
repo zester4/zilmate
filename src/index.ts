@@ -31,6 +31,7 @@ import { listVoiceDevices, printVoiceConfig, runTerminalVoiceLive, runVoiceAgent
 import { printVersionStatus, runSelfUpdate } from './cli/update.js';
 import { captureCameraCli, listCameraDevicesCli, runCameraDoctorCli } from './cli/camera.js';
 import { printModelBrowser } from './cli/models.js';
+import { startChatListener } from './cli/chat.js';
 
 type TextAgentFactory = () => { generate: (input: { prompt: string }) => Promise<{ text: string }> };
 
@@ -143,33 +144,7 @@ program
   .description('Interactive wizard to configure ZilMate credentials and features')
   .action(async (options: any) => {
     try {
-      await runSetup({
-        path: options.path,
-        force: options.force,
-        yes: options.yes,
-        aiGatewayKey: options.aiGatewayKey,
-        composioKey: options.composioKey,
-        zilmateUserId: options.zilmateUserId,
-        tavilyKey: options.tavilyKey,
-        redisUrl: options.redisUrl,
-        redisToken: options.redisToken,
-        jobsEnabled: options.jobsEnabled,
-        qstashToken: options.qstashToken,
-        publicJobWebhookUrl: options.jobWebhookUrl,
-        jobWebhookSecret: options.jobWebhookSecret,
-        triggerWorkflowsEnabled: options.triggerWorkflowsEnabled,
-        deepgramApiKey: options.deepgramKey,
-        voiceEnabled: options.voiceEnabled,
-        voiceListenModel: options.voiceListenModel,
-        voiceTtsModel: options.voiceTtsModel,
-        voiceLanguage: options.voiceLanguage,
-        voiceInputDevice: options.voiceInputDevice,
-        screenshotModel: options.screenshotModel,
-        fileRoots: options.fileRoots,
-        cameraDevice: options.cameraDevice,
-        installCameraDeps: options.installCameraDeps,
-        installCloudflareDeps: options.installCloudflareDeps,
-      });
+      await runSetup(options);
     } catch (error) {
       printError(friendlyError(error));
       process.exitCode = 1;
@@ -203,7 +178,9 @@ setup
   .option('--slack-bot-token <token>', 'Slack Bot Token')
   .option('--slack-signing-secret <secret>', 'Slack Signing Secret')
   .option('--telegram-bot-token <token>', 'Telegram Bot Token')
-  .description('Configure Slack and Telegram chat channels')
+  .option('--imessage-enabled <true|false>', 'Enable or disable iMessage')
+  .option('--imessage-local <true|false>', 'Use local iMessage database (macOS)')
+  .description('Configure Slack, Telegram, and iMessage chat channels')
   .action(async (options: any) => {
     try {
       await runChatSetup(options);
@@ -237,6 +214,35 @@ voice
   .action(async (options: { path: string }) => {
     try {
       await setVoiceEnabled(false, options);
+    } catch (error) {
+      printError(friendlyError(error));
+      process.exitCode = 1;
+    }
+  });
+
+const chatCmd = program
+  .command('chat')
+  .description('Manage external chat integration channels');
+
+chatCmd
+  .command('listen')
+  .description('Start the production-grade chat listener for Slack/Telegram/iMessage')
+  .action(async () => {
+    try {
+      await startChatListener();
+    } catch (error) {
+      printError(friendlyError(error));
+      process.exitCode = 1;
+    }
+  });
+
+chatCmd
+  .command('msg')
+  .argument('<message...>', 'message to discuss')
+  .description('One-shot natural dialogue about ZiloShift')
+  .action(async (message: string[]) => {
+    try {
+      await runAgentText(createChatAgent, message.join(' '));
     } catch (error) {
       printError(friendlyError(error));
       process.exitCode = 1;
@@ -724,19 +730,6 @@ program
   .action(async (options: { session: string }) => {
     try {
       await startInteractiveChat(options.session);
-    } catch (error) {
-      printError(friendlyError(error));
-      process.exitCode = 1;
-    }
-  });
-
-program
-  .command('chat')
-  .argument('<message...>', 'message to discuss')
-  .description('One-shot natural dialogue about ZiloShift')
-  .action(async (message: string[]) => {
-    try {
-      await runAgentText(createChatAgent, message.join(' '));
     } catch (error) {
       printError(friendlyError(error));
       process.exitCode = 1;

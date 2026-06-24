@@ -1,118 +1,67 @@
 # ZilMate Chat Integration Guide
 
-This document outlines how to integrate ZilMate into third-party chat platforms like Slack, Telegram, Microsoft Teams, and iMessage, enabling both reactive (responding to mentions) and proactive (reporting events) capabilities.
+ZilMate is now a fully multi-channel agent. You can communicate with it via **Slack**, **Telegram**, **iMessage**, and the **Terminal** simultaneously, with a unified brain and persistent memory.
 
 ## 1. Professional Setup & Diagnostics
 
-As the project owner, I've integrated Chat as a first-class citizen in the ZilMate lifecycle. You don't need to manually hack config files; the CLI handles it for you.
+As the project owner, I've integrated Chat as a first-class citizen. Use the built-in wizard to configure your bots.
 
 ### Interactive Setup
-Run the main setup and look for the **Chat Channels** section:
 ```bash
+# Configure everything
 zilmate setup
-```
-Or configure chat specifically:
-```bash
+
+# OR configure chat specifically
 zilmate setup chat
 ```
 
 You will be prompted for:
-*   **SLACK_BOT_TOKEN** / **SLACK_SIGNING_SECRET**
-*   **TELEGRAM_BOT_TOKEN**
+*   **Slack:** Bot Token and Signing Secret.
+*   **Telegram:** Bot Token.
+*   **iMessage:** Local macOS mode or Remote Photon mode.
 
 ### Health Checks
-Verify your chat configuration at any time with:
 ```bash
 zilmate doctor
 ```
-The doctor will report which channels are active and if any tokens are missing.
+The doctor verifies your channel configurations and ensures adapters are ready.
 
-## 2. Unified Integration with @vercel/chat (Chat SDK)
+## 2. Running the Chat Bot (Production Grade)
 
-ZilMate's server SDK is designed to plug directly into the [Chat SDK](https://github.com/vercel/chat) ecosystem. This provides a single interface for multiple adapters.
+Once configured, start the production listener. This connects to all enabled platforms and starts processing messages.
 
-### Installation
 ```bash
-npm install chat @chat-adapter/slack @chat-adapter/telegram
+zilmate chat listen
 ```
 
-### Implementation Example
-Use the `handleChatMessage` bridge (`src/runtime/chat-bridge.ts`) to connect ZilMate's Manager to your chat adapters.
+*   **Persistent Sessions:** ZilMate automatically maps users to unique session IDs (e.g., `chat-slack-U12345`). This ensures that if you start a task on Slack, the agent remembers it when you follow up later.
+*   **Shared Brain:** The same Manager used in the CLI handles your chat messages, giving you full orchestration and tool access (Stripe, GitHub, etc.) from your phone.
 
-```typescript
-import { Chat } from "chat";
-import { createSlackAdapter } from "@chat-adapter/slack";
-import { handleChatMessage } from "./runtime/chat-bridge.js";
+## 3. Trigger-Based Proactive Reporting
 
-const bot = new Chat({
-  adapters: {
-    slack: createSlackAdapter(),
-  },
-});
+ZilMate doesn't just wait for you to speak; it can report to you.
 
-bot.onNewMention(async (thread, message) => {
-  await handleChatMessage({
-    text: message.text,
-    authorId: message.author.id,
-    platform: 'slack',
-    onReply: (text) => thread.post(text),
-    onStep: (label) => thread.post(`_Thinking: ${label}_`)
-  });
-});
-```
+### Automatic Event Responses
+Using the `TriggerOrchestrator`, ZilMate can detect events (like a Stripe payout or a GitHub push) and proactively send a summary to your Telegram or Slack.
 
-## 3. Proactive Reporting (The "Powerful" Part)
-
-ZilMate can act autonomously by reporting business events back to your chat channels.
-
-### A. Event Triggers (via Composio)
-ZilMate's `orchestrateComposioTrigger` (`src/jobs/trigger-orchestrator.ts`) allows the agent to wake up when external apps (Stripe, HubSpot, GitHub) fire events.
-
-### B. Scheduled Briefings (via QStash)
-Use ZilMate's background jobs to schedule tasks that report to you.
-```typescript
-const job = await zilmate.createJob({
-  task: "Research the top 3 trending AI tools today and send a summary to my Telegram.",
-  schedule: "0 9 * * *" // Daily at 9 AM
-});
-```
-
-## 4. Supported Platforms & Adapters
-
-| Platform | Adapter Package | Notes |
-|----------|-----------------|-------|
-| **Slack** | `@chat-adapter/slack` | Supports Socket Mode and Webhooks. |
-| **Telegram**| `@chat-adapter/telegram`| Uses the Telegram Bot API. |
-| **MS Teams**| `@chat-adapter/teams` | Requires Azure Bot Service. |
-| **iMessage**| `chat-adapter-imessage`| Can run locally on macOS or via bridge. |
-| **Discord** | `@chat-adapter/discord`| Ideal for community management. |
-
-## 5. CLI Usage (The "Terminal" Way)
-
-If you prefer using ZilMate directly in the terminal, it offers parity with the SDK features.
-
-### Interactive Mode
-To start a long-running, conversational session where the agent remembers the context:
+### Scheduled Briefings
 ```bash
-# Uses the 'default' session
-zilmate talk
-
-# Uses a specific named session
-zilmate talk --session my-project-research
+# Create a scheduled report
+zilmate jobs create "At 9 AM, research my competitor's latest news and send a summary to Slack." --schedule "0 9 * * *"
 ```
 
-### One-Shot Commands
-For quick questions or tasks without entering an interactive shell:
-```bash
-# Conversational guide
-zilmate chat "How do I process a refund in ZiloShift?"
+## 4. Architecture Reference
 
-# Full manager orchestration (for complex tasks)
-zilmate manager "Research the current repo and suggest a refactor for the auth logic."
-```
+The integration is built on the [Chat SDK](https://github.com/vercel/chat), providing a stable normalization layer for:
+*   `@chat-adapter/slack`
+*   `@chat-adapter/telegram`
+*   `chat-adapter-imessage` (Supports local macOS DB and remote bridge)
 
-### Shared State
-ZilMate CLI and SDK share the same workspace. If you run a task in the SDK with `sessionId: "alpha"`, you can resume it in the terminal using:
-```bash
-zilmate talk --session alpha
-```
+## 5. Terminal vs Chat Parity
+
+You have 100% feature parity.
+*   **Terminal:** Use `zilmate talk` for deep work.
+*   **Chat:** Use Telegram/Slack for mobile access and alerts.
+*   **SDK:** Use `createZilMate()` to build custom UI integrations.
+
+All interfaces share the same **Workspace Memory**, ensuring ZilMate stays smart regardless of where you talk to it.

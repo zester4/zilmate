@@ -45,6 +45,8 @@ type SetupOptions = {
   slackSigningSecret?: string;
   telegramBotToken?: string;
   chatEnabled?: string;
+  imessageEnabled?: string;
+  imessageLocal?: string;
 };
 
 const defaults = {
@@ -400,16 +402,16 @@ export async function runSetup(options: SetupOptions = {}) {
     if (!options.yes && (!values.has('CHAT_INTEGRATION_ENABLED') || options.force)) {
       if (await askSection(
         rl,
-        'Chat Channels (Slack & Telegram)',
-        'Enable ZilMate to respond to you on Slack or Telegram, and proactively report business events.',
+        'Chat Channels (Slack, Telegram, iMessage)',
+        'Enable ZilMate to respond to you on Slack, Telegram, or iMessage, and proactively report business events.',
         'Configure Chat Channels now?',
         false,
       )) {
         values.set('CHAT_INTEGRATION_ENABLED', 'true');
         touchedKeys.add('CHAT_INTEGRATION_ENABLED');
 
-        const slackToken = options.slackBotToken || await askOptionalSecret(rl, 'SLACK_BOT_TOKEN (optional): ');
-        if (slackToken) {
+        if (await askYesNo(rl, 'Configure Slack?', Boolean(values.get('SLACK_BOT_TOKEN')))) {
+          const slackToken = options.slackBotToken || await askRequiredSecret(rl, 'SLACK_BOT_TOKEN: ');
           values.set('SLACK_BOT_TOKEN', slackToken);
           touchedKeys.add('SLACK_BOT_TOKEN');
           const slackSecret = options.slackSigningSecret || await askOptionalSecret(rl, 'SLACK_SIGNING_SECRET (optional): ');
@@ -419,10 +421,26 @@ export async function runSetup(options: SetupOptions = {}) {
           }
         }
 
-        const tgToken = options.telegramBotToken || await askOptionalSecret(rl, 'TELEGRAM_BOT_TOKEN (optional): ');
-        if (tgToken) {
+        if (await askYesNo(rl, 'Configure Telegram?', Boolean(values.get('TELEGRAM_BOT_TOKEN')))) {
+          const tgToken = options.telegramBotToken || await askRequiredSecret(rl, 'TELEGRAM_BOT_TOKEN: ');
           values.set('TELEGRAM_BOT_TOKEN', tgToken);
           touchedKeys.add('TELEGRAM_BOT_TOKEN');
+        }
+
+        if (await askYesNo(rl, 'Configure iMessage?', values.get('CHAT_IMESSAGE_ENABLED') === 'true')) {
+           values.set('CHAT_IMESSAGE_ENABLED', 'true');
+           touchedKeys.add('CHAT_IMESSAGE_ENABLED');
+           if (process.platform === 'darwin') {
+             values.set('IMESSAGE_LOCAL', (await askYesNo(rl, 'Use local iMessage database (macOS only)?', true)) ? 'true' : 'false');
+             touchedKeys.add('IMESSAGE_LOCAL');
+           } else {
+             values.set('IMESSAGE_LOCAL', 'false');
+             touchedKeys.add('IMESSAGE_LOCAL');
+             console.log(chalk.yellow('Non-macOS platform detected. iMessage will run in Remote Mode via Photon bridge.'));
+           }
+        } else {
+           values.set('CHAT_IMESSAGE_ENABLED', 'false');
+           touchedKeys.add('CHAT_IMESSAGE_ENABLED');
         }
       } else {
         values.set('CHAT_INTEGRATION_ENABLED', 'false');
@@ -506,7 +524,7 @@ export async function runVoiceSetup(options: Pick<SetupOptions, 'path' | 'force'
     console.log(chalk.gray('Defaults use Deepgram Flux V2 for fast listening and Aura-2 for spoken replies.'));
 
     if (existing.size > 0 && !options.force) {
-      const update = await askYesNo(rl, `${envPath} already exists. Update voice settings?`, true);
+      const update = await askYesNo(rl, \ clouds${envPath} already exists. Update voice settings?`, true);
       if (!update) {
         console.log(chalk.yellow('Voice setup cancelled. Existing .env was left unchanged.'));
         return;
@@ -581,14 +599,14 @@ export async function setVoiceEnabled(enabled: boolean, options: Pick<SetupOptio
   ]);
 }
 
-export async function runChatSetup(options: Pick<SetupOptions, 'path' | 'force' | 'slackBotToken' | 'slackSigningSecret' | 'telegramBotToken'> = {}) {
+export async function runChatSetup(options: Pick<SetupOptions, 'path' | 'force' | 'slackBotToken' | 'slackSigningSecret' | 'telegramBotToken' | 'imessageEnabled' | 'imessageLocal'> = {}) {
   const envPath = options.path || '.env';
   const existing = await readEnvValues(envPath);
   const rl = readline.createInterface({ input, output });
 
   try {
     printZilMateBanner('Chat setup');
-    console.log(chalk.gray('Configure Slack and Telegram channels for ZilMate.'));
+    console.log(chalk.gray('Configure Slack, Telegram, and iMessage channels for ZilMate.'));
 
     const values = new Map(existing);
     values.set('CHAT_INTEGRATION_ENABLED', 'true');
@@ -596,20 +614,33 @@ export async function runChatSetup(options: Pick<SetupOptions, 'path' | 'force' 
     if (options.slackBotToken) {
       values.set('SLACK_BOT_TOKEN', options.slackBotToken);
       if (options.slackSigningSecret) values.set('SLACK_SIGNING_SECRET', options.slackSigningSecret);
-    } else if (await askYesNo(rl, 'Configure Slack?', false)) {
+    } else if (await askYesNo(rl, 'Configure Slack?', Boolean(values.get('SLACK_BOT_TOKEN')))) {
       values.set('SLACK_BOT_TOKEN', await askRequiredSecret(rl, 'SLACK_BOT_TOKEN: '));
       values.set('SLACK_SIGNING_SECRET', await askOptionalSecret(rl, 'SLACK_SIGNING_SECRET: '));
     }
 
     if (options.telegramBotToken) {
       values.set('TELEGRAM_BOT_TOKEN', options.telegramBotToken);
-    } else if (await askYesNo(rl, 'Configure Telegram?', false)) {
+    } else if (await askYesNo(rl, 'Configure Telegram?', Boolean(values.get('TELEGRAM_BOT_TOKEN')))) {
       values.set('TELEGRAM_BOT_TOKEN', await askRequiredSecret(rl, 'TELEGRAM_BOT_TOKEN: '));
+    }
+
+    const imessageEnabled = options.imessageEnabled !== undefined ? normalizeBooleanOption(options.imessageEnabled) : undefined;
+    if (imessageEnabled !== undefined) {
+      values.set('CHAT_IMESSAGE_ENABLED', imessageEnabled ? 'true' : 'false');
+      if (options.imessageLocal !== undefined) values.set('IMESSAGE_LOCAL', normalizeBooleanOption(options.imessageLocal) ? 'true' : 'false');
+    } else if (await askYesNo(rl, 'Configure iMessage?', values.get('CHAT_IMESSAGE_ENABLED') === 'true')) {
+      values.set('CHAT_IMESSAGE_ENABLED', 'true');
+      if (process.platform === 'darwin') {
+        values.set('IMESSAGE_LOCAL', (await askYesNo(rl, 'Use local iMessage database (macOS only)?', true)) ? 'true' : 'false');
+      } else {
+        values.set('IMESSAGE_LOCAL', 'false');
+      }
     }
 
     await writeEnvValues(envPath, values, {
       merge: existsSync(envPath),
-      touchedKeys: new Set(['CHAT_INTEGRATION_ENABLED', 'SLACK_BOT_TOKEN', 'SLACK_SIGNING_SECRET', 'TELEGRAM_BOT_TOKEN']),
+      touchedKeys: new Set(['CHAT_INTEGRATION_ENABLED', 'SLACK_BOT_TOKEN', 'SLACK_SIGNING_SECRET', 'TELEGRAM_BOT_TOKEN', 'CHAT_IMESSAGE_ENABLED', 'IMESSAGE_LOCAL']),
     });
 
     console.log(chalk.green(`Saved chat settings to ${envPath}.`));
@@ -617,6 +648,7 @@ export async function runChatSetup(options: Pick<SetupOptions, 'path' | 'force' 
       ['Status', 'enabled'],
       ['Slack', values.get('SLACK_BOT_TOKEN') ? 'configured' : 'missing'],
       ['Telegram', values.get('TELEGRAM_BOT_TOKEN') ? 'configured' : 'missing'],
+      ['iMessage', values.get('CHAT_IMESSAGE_ENABLED') === 'true' ? values.get('IMESSAGE_LOCAL') === 'true' ? 'enabled (Local)' : 'enabled (Remote)' : 'disabled'],
     ]);
   } finally {
     rl.close();
