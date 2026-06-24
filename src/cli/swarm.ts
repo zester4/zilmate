@@ -1,5 +1,5 @@
 ﻿import { createDigitalCorporationMain } from '../agents/swarm/main.js';
-import { printMarkdown, printProgress, printError, printTable, clip } from './format.js';
+import { printMarkdown, printProgress, printError, printTable } from './format.js';
 import { createTerminalConfirmation } from './confirm.js';
 import { listSpecialists, createSwarmSpecialist } from '../agents/swarm/registry.js';
 import chalk from 'chalk';
@@ -29,21 +29,23 @@ export async function runSwarmCli(task: string, options: { session: string }) {
 }
 
 async function printSwarmDashboard() {
-  console.log(chalk.bold.cyan('\nDigital Corporation Swarm Dashboard'));
-  console.log(chalk.gray('Status: ACTIVE · Agents: 30 · Departments: 7\n'));
+  console.log(chalk.bold.cyan('\nDigital Corporation Swarm Dashboard (v3.0)'));
+  console.log(chalk.gray('Status: ACTIVE · Tier: Enterprise · Hierarchy: 3-Tier Swarm\n'));
 
   const specialists = listSpecialists();
-  const headers = ['Department', 'Agent', 'Mission / Capabilities'];
+  const headers = ['Department', 'Role', 'Agent (Head/Specialist)', 'Mission / Capabilities'];
   const rows: string[][] = [];
 
   specialists.forEach(key => {
-    // We instantiate to get the config, this is lightweight
     const agent = createSwarmSpecialist(key);
     const config = (agent as any).config;
+    const isHead = key.toLowerCase().includes('head') || key.toLowerCase().includes('cto') || key.toLowerCase().includes('cmo') || key.toLowerCase().includes('cro') || key.toLowerCase().includes('ciso') || key.toLowerCase().includes('cdo');
+
     rows.push([
       config.department,
+      isHead ? chalk.bold.yellow('HEAD') : 'Specialist',
       config.name,
-      config.instructions.split('\n')[0] // First line is the persona/mission
+      config.instructions.split('\n')[0]
     ]);
   });
 

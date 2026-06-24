@@ -30,11 +30,11 @@ export class SwarmAgent {
     this.agent = new ToolLoopAgent({
       model: models.chat,
       instructions: [
-        `You are ${this.config.name}, a specialist in the ${this.config.department} department.`,
+        `You are ${this.config.name}, in the ${this.config.department} department.`,
         `SESSION CONTEXT: Your current departmental session is "${deptRunId}".`,
         this.config.instructions,
         `You have access to a vast array of external tools via Composio. Use them for real-world tasks.`,
-        `MEMORY ISOLATION: Your scratchpad and notebooks are scoped to the ${this.config.department} department. You cannot see raw data from other departments unless it is shared in the Global Notebook by the COO.`,
+        `MEMORY ISOLATION: Your scratchpad and notebooks are scoped to the ${this.config.department} department. You cannot see raw data from other departments unless it is shared by the COO.`,
         `When you complete a significant task or plan, use the updateStatusReport tool to document your work.`,
       ].join('\n'),
       tools: {
@@ -79,13 +79,13 @@ export type SwarmMessage = {
 export class SwarmOrchestrator {
   private static instance: SwarmOrchestrator;
   private departments: Map<string, string[]> = new Map([
-    ['strategy', ['productManager', 'marketAnalyst', 'uxResearcher']],
-    ['engineering', ['architect', 'fullStackCoder', 'qaEngineer', 'devopsSre', 'creativeDirector']],
-    ['growth', ['growthHacker', 'seoExpert', 'contentWriter', 'socialMediaManager', 'adsManager']],
-    ['revenue', ['enterpriseSales', 'channelManager', 'affiliateManager', 'contractAnalyst', 'revOps']],
-    ['operations', ['financeAnalyst', 'customerSuccess', 'legalCounsel', 'logisticsLead', 'hrRecruiter']],
-    ['security', ['redTeam', 'blueTeam', 'complianceOfficer', 'iamArchitect', 'incidentResponse']],
-    ['data', ['dataScientist', 'biReporter']],
+    ['strategy', ['strategyHead', 'productManager', 'marketAnalyst', 'uxResearcher']],
+    ['engineering', ['ctoEngineering', 'architect', 'fullStackCoder', 'qaEngineer', 'devopsSre', 'creativeDirector']],
+    ['growth', ['cmoGrowth', 'growthHacker', 'seoExpert', 'contentWriter', 'socialMediaManager', 'adsManager']],
+    ['revenue', ['croRevenue', 'enterpriseSales', 'channelManager', 'affiliateManager', 'contractAnalyst', 'revOps']],
+    ['operations', ['opsHead', 'financeAnalyst', 'customerSuccess', 'legalCounsel', 'logisticsLead', 'hrRecruiter']],
+    ['security', ['cisoSecurity', 'redTeam', 'blueTeam', 'complianceOfficer', 'iamArchitect', 'incidentResponse']],
+    ['data', ['cdoData', 'dataScientist', 'biReporter']],
   ]);
 
   private constructor() {}
@@ -106,11 +106,13 @@ export class SwarmOrchestrator {
         subagent: z.string(),
         reasoning: z.string(),
       }),
-      prompt: `Analyze this business task and assign it to the most relevant department and subagent:
+      prompt: `Analyze this business task and assign it to the most relevant department Head or specialist:
       Task: ${task}
 
       Available Departments: ${Array.from(this.departments.keys()).join(', ')}
-      Available Subagents: ${Array.from(this.departments.values()).flat().join(', ')}`,
+      Available Subagents: ${Array.from(this.departments.values()).flat().join(', ')}
+
+      HINT: Favor Department Heads (strategyHead, ctoEngineering, cmoGrowth, croRevenue, opsHead, cisoSecurity, cdoData) for broad or complex goals.`,
     });
 
     return object as any;
