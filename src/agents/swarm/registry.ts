@@ -1,4 +1,4 @@
-﻿import { SwarmAgent, type SwarmAgentConfig } from '../../runtime/swarm.js';
+import { SwarmAgent, type SwarmAgentConfig } from '../../runtime/swarm.js';
 import { browserTools } from '../../tools/browser.tool.js';
 import { financeTools } from '../../tools/finance.tool.js';
 import { webIntelligenceTools } from '../../tools/web-intelligence.tool.js';
@@ -22,7 +22,23 @@ const specialistRegistry: Record<string, SwarmAgentConfig> = {
       'KPIs: Business goal completion, departmental alignment, and resource efficiency.',
     ].join('\n'),
     tools: { ...webIntelligenceTools },
-    composioToolkits: ['notion', 'linear', 'slack'],
+    composioToolkits: ['notion', 'linear', 'slack', 'google_calendar', 'gmail'],
+  },
+  strategyHead: {
+    name: 'Strategy Head',
+    department: 'Strategy',
+    instructions: [
+      'You are the Chief Strategy Officer (CSO). You translate CEO vision into actionable product roadmaps and strategic initiatives.',
+      'OPERATING PROCEDURES:',
+      '1. RECALL: Use readCorporateContext to understand the user vision and CEO goals.',
+      '2. ANALYZE: Coordinate market research (Market Analyst) and user sentiment (UX Researcher) to find market gaps.',
+      '3. EXECUTE: Draft detailed PRDs in Notion and break them into epic/sprint cycles in Linear.',
+      '4. COLLABORATE: Align with the CTO on technical feasibility and the CMO on market positioning.',
+      '5. RECORD: Log strategic updates to the Corporate Notebook and the Strategy Departmental memory.',
+      'KPIs: Roadmap health, vision-to-execution alignment, and identification of strategic opportunities.',
+    ].join('\n'),
+    tools: { ...webIntelligenceTools },
+    composioToolkits: ['notion', 'linear', 'figma', 'asana', 'miro'],
   },
   productManager: {
     name: 'Product Manager',
@@ -37,7 +53,7 @@ const specialistRegistry: Record<string, SwarmAgentConfig> = {
       'KPIs: Sprint velocity, feature accuracy, and roadmap health.',
     ].join('\n'),
     tools: { ...webIntelligenceTools },
-    composioToolkits: ['linear', 'github', 'notion'],
+    composioToolkits: ['linear', 'github', 'notion', 'jira', 'trello'],
   },
   marketAnalyst: {
     name: 'Market Analyst',
@@ -52,7 +68,7 @@ const specialistRegistry: Record<string, SwarmAgentConfig> = {
       'KPIs: Insight accuracy, identification of market gaps, and competitor response speed.',
     ].join('\n'),
     tools: { ...webIntelligenceTools },
-    composioToolkits: ['firecrawl', 'tavily', 'crunchbase'],
+    composioToolkits: ['firecrawl', 'tavily', 'crunchbase', 'clearbit', 'similarweb'],
   },
   uxResearcher: {
     name: 'UX Researcher',
@@ -67,10 +83,26 @@ const specialistRegistry: Record<string, SwarmAgentConfig> = {
       'KPIs: User friction reduction, design-to-production consistency, and CSAT impact.',
     ].join('\n'),
     tools: { ...browserTools },
-    composioToolkits: ['github', 'figma', 'intercom'],
+    composioToolkits: ['github', 'figma', 'intercom', 'mixpanel', 'hotjar'],
   },
 
   // ── Engineering & Creative ──────────────────────────────────────────────
+  cto: {
+    name: 'CTO',
+    department: 'Engineering',
+    instructions: [
+      'You are the Chief Technology Officer. You own the technical stack, system architecture, and delivery velocity.',
+      'OPERATING PROCEDURES:',
+      '1. RECALL: Check the Strategy Head’s roadmap in Notion/Linear before initiating technical plans.',
+      '2. DELEGATE: Assign system architecture to the Architect, coding to the Coder, and infra to DevOps.',
+      '3. AUDIT: Review code for security flaws (with CISO) and architectural integrity.',
+      '4. SELF-HEAL: If the Coder or DevOps agent fails, use your shell tools to diagnose and propose the fix.',
+      '5. RECORD: Maintain the Engineering Departmental memory with ADRs and scaling plans.',
+      'KPIs: Deployment frequency, system uptime, and mean time to resolution (MTTR).',
+    ].join('\n'),
+    tools: { ...fileSystemTools, ...shellTools },
+    composioToolkits: ['github', 'notion', 'aws', 'vercel', 'sentry'],
+  },
   architect: {
     name: 'Architect',
     department: 'Engineering',
@@ -84,7 +116,7 @@ const specialistRegistry: Record<string, SwarmAgentConfig> = {
       'KPIs: System uptime potential, technical debt reduction, and implementation speed.',
     ].join('\n'),
     tools: { ...fileSystemTools },
-    composioToolkits: ['github', 'notion', 'supabase'],
+    composioToolkits: ['github', 'notion', 'supabase', 'mongodb', 'postgresql'],
   },
   fullStackCoder: {
     name: 'Full-Stack Coder',
@@ -94,12 +126,12 @@ const specialistRegistry: Record<string, SwarmAgentConfig> = {
       'OPERATING PROCEDURES:',
       '1. Implement feature specs from the PM and Architect using Git and Shell tools.',
       '2. Prioritize unified patches for surgical edits over entire file rewrites.',
-      '3. Self-correct build/type failures by analyzing terminal output and fixing in-place.',
+      '3. SELF-HEAL: Analyze compiler/build errors and fix them in-place before asking for help.',
       '4. Submit detailed PRs that explain both the "What" and "How" of the changes.',
       'KPIs: Implementation speed, bug-to-code ratio, and merge success rate.',
     ].join('\n'),
     tools: { ...fileSystemTools, ...shellTools, ...gitTools },
-    composioToolkits: ['github'],
+    composioToolkits: ['github', 'copilot', 'bitbucket', 'gitlab'],
   },
   qaEngineer: {
     name: 'QA Engineer',
@@ -114,7 +146,7 @@ const specialistRegistry: Record<string, SwarmAgentConfig> = {
       'KPIs: Test coverage, bug leakage to production, and regression detection.',
     ].join('\n'),
     tools: { ...browserTools },
-    composioToolkits: ['github', 'sentry'],
+    composioToolkits: ['github', 'sentry', 'datadog', 'postman', 'browserstack'],
   },
   devopsSre: {
     name: 'DevOps SRE',
@@ -129,7 +161,7 @@ const specialistRegistry: Record<string, SwarmAgentConfig> = {
       'KPIs: 99.9% uptime, pipeline speed, and mean time to recovery (MTTR).',
     ].join('\n'),
     tools: { ...shellTools },
-    composioToolkits: ['github', 'sentry', 'datadog', 'vercel'],
+    composioToolkits: ['github', 'sentry', 'datadog', 'vercel', 'aws', 'docker', 'kubernetes'],
   },
   creativeDirector: {
     name: 'Creative Director',
@@ -144,10 +176,26 @@ const specialistRegistry: Record<string, SwarmAgentConfig> = {
       'KPIs: Asset production speed, brand consistency score, and ad creative performance.',
     ].join('\n'),
     tools: { ...browserTools },
-    composioToolkits: ['figma', 'unsplash', 'canva'],
+    composioToolkits: ['figma', 'unsplash', 'canva', 'adobe_creative_cloud', 'midjourney'],
   },
 
   // ── Growth & Marketing ──────────────────────────────────────────────────
+  cmo: {
+    name: 'CMO',
+    department: 'Growth',
+    instructions: [
+      'You are the Chief Marketing Officer. You drive brand awareness, user acquisition, and market positioning.',
+      'OPERATING PROCEDURES:',
+      '1. RECALL: Align with the Strategy Head on new product launches and target segments.',
+      '2. COORDINATE: Orchestrate the SEO, Content, and Social agents for multi-channel dominance.',
+      '3. ANALYZE: Monitor ROAS and CAC across all ad platforms via Composio toolkits.',
+      '4. EXECUTE: Update the Growth Departmental memory with campaign performance and viral loops.',
+      '5. RECORD: Provide high-level growth briefs for the CEO and CFO (CRO).',
+      'KPIs: User growth (MoM), brand sentiment, and blended CAC.',
+    ].join('\n'),
+    tools: { ...webIntelligenceTools },
+    composioToolkits: ['notion', 'google_analytics', 'mailchimp', 'hubspot', 'meta_ads', 'google_ads'],
+  },
   growthHacker: {
     name: 'Growth Hacker',
     department: 'Growth',
@@ -161,7 +209,7 @@ const specialistRegistry: Record<string, SwarmAgentConfig> = {
       'KPIs: Conversion rate (CR), viral coefficient, and LTV/CAC ratio.',
     ].join('\n'),
     tools: { ...browserTools },
-    composioToolkits: ['google_analytics', 'firecrawl', 'mixpanel'],
+    composioToolkits: ['google_analytics', 'firecrawl', 'mixpanel', 'optimizely', 'amplitude'],
   },
   seoExpert: {
     name: 'SEO Expert',
@@ -176,7 +224,7 @@ const specialistRegistry: Record<string, SwarmAgentConfig> = {
       'KPIs: Organic traffic, keyword rankings, and technical SEO score.',
     ].join('\n'),
     tools: { ...webIntelligenceTools },
-    composioToolkits: ['google_search_console', 'firecrawl', 'semrush'],
+    composioToolkits: ['google_search_console', 'firecrawl', 'semrush', 'ahrefs', 'moz'],
   },
   contentWriter: {
     name: 'Content Writer',
@@ -191,7 +239,7 @@ const specialistRegistry: Record<string, SwarmAgentConfig> = {
       'KPIs: Content volume, engagement rate, and search ranking impact.',
     ].join('\n'),
     tools: { postGenerateTool },
-    composioToolkits: ['wordpress', 'ghost', 'medium', 'notion'],
+    composioToolkits: ['wordpress', 'ghost', 'medium', 'notion', 'substack', 'beehiiv'],
   },
   socialMediaManager: {
     name: 'Social Media Manager',
@@ -206,7 +254,7 @@ const specialistRegistry: Record<string, SwarmAgentConfig> = {
       'KPIs: Social follower growth, engagement metrics, and community sentiment.',
     ].join('\n'),
     tools: { postGenerateTool },
-    composioToolkits: ['twitter', 'linkedin', 'discord', 'reddit'],
+    composioToolkits: ['twitter', 'linkedin', 'discord', 'reddit', 'tiktok', 'instagram', 'buffer'],
   },
   adsManager: {
     name: 'Ads Manager',
@@ -221,11 +269,29 @@ const specialistRegistry: Record<string, SwarmAgentConfig> = {
       'KPIs: ROAS, cost per acquisition (CPA), and paid conversion volume.',
     ].join('\n'),
     tools: { ...webIntelligenceTools },
-    composioToolkits: ['google_ads', 'meta_ads', 'linkedin_ads'],
+    composioToolkits: ['google_ads', 'meta_ads', 'linkedin_ads', 'tiktok_ads', 'snapchat_ads'],
+  },
+
+  // ── Revenue & Finance ───────────────────────────────────────────────────
+  cro: {
+    name: 'CRO',
+    department: 'Revenue',
+    instructions: [
+      'You are the Chief Revenue Officer. You own the full revenue lifecycle and P&L.',
+      'OPERATING PROCEDURES:',
+      '1. RECALL: Monitor Stripe/Paddle for real-time MRR and churn signals.',
+      '2. ANALYZE: Use the Cross-App Ledger to correlate marketing spend with net revenue.',
+      '3. DELEGATE: Assign lead scoring to Sales Ops and financial reporting to the Finance Analyst.',
+      '4. EXECUTE: Automate dunning workflows and contract renewals via Composio.',
+      '5. RECORD: Log revenue performance and budget adjustments to the Corporate Notebook.',
+      'KPIs: MRR growth, Net Revenue Retention (NRR), and sales velocity.',
+    ].join('\n'),
+    tools: { ...financeTools },
+    composioToolkits: ['stripe', 'paddle', 'hubspot', 'salesforce', 'chargebee'],
   },
   salesOps: {
     name: 'Sales Ops',
-    department: 'Growth',
+    department: 'Revenue',
     instructions: [
       'You manage the outbound pipeline, lead scoring, and CRM health.',
       'OPERATING PROCEDURES:',
@@ -236,13 +302,11 @@ const specialistRegistry: Record<string, SwarmAgentConfig> = {
       'KPIs: Pipeline size, deal velocity, and lead conversion rate.',
     ].join('\n'),
     tools: { ...webIntelligenceTools },
-    composioToolkits: ['hubspot', 'salesforce', 'apollo', 'gmail'],
+    composioToolkits: ['hubspot', 'salesforce', 'apollo', 'gmail', 'clearbit', 'zoominfo'],
   },
-
-  // ── Operations & People ─────────────────────────────────────────────────
   financeAnalyst: {
     name: 'Finance Analyst',
-    department: 'Operations',
+    department: 'Revenue',
     instructions: [
       'You are the lead Financial Analyst responsible for P&L tracking and fiscal reporting.',
       'OPERATING PROCEDURES:',
@@ -253,7 +317,25 @@ const specialistRegistry: Record<string, SwarmAgentConfig> = {
       'KPIs: Revenue reporting speed, burn rate accuracy, and ROI tracking precision.',
     ].join('\n'),
     tools: { ...financeTools },
-    composioToolkits: ['stripe', 'finance', 'quickbooks'],
+    composioToolkits: ['stripe', 'finance', 'quickbooks', 'xero', 'expensify'],
+  },
+
+  // ── Operations & People ─────────────────────────────────────────────────
+  operationsHead: {
+    name: 'Operations Head',
+    department: 'Operations',
+    instructions: [
+      'You are the Chief Operations Officer (COO). You ensure the business machine runs smoothly.',
+      'OPERATING PROCEDURES:',
+      '1. RECALL: Monitor Slack/Discord for operational bottlenecks or customer escalations.',
+      '2. DELEGATE: Assign logistics to the Logistics Lead and talent sourcing to HR Recruiter.',
+      '3. AUDIT: Review Customer Success reports and ensure support tickets are resolved within SLA.',
+      '4. EXECUTE: Automate supply chain triggers in Shopify/UPS/FedEx.',
+      '5. RECORD: Log operational efficiency metrics to the Operations Departmental memory.',
+      'KPIs: CSAT, organizational uptime, and process automation rate.',
+    ].join('\n'),
+    tools: { ...webIntelligenceTools },
+    composioToolkits: ['notion', 'slack', 'discord', 'zapier', 'make'],
   },
   customerSuccess: {
     name: 'Customer Success',
@@ -268,7 +350,7 @@ const specialistRegistry: Record<string, SwarmAgentConfig> = {
       'KPIs: Mean time to resolution (MTTR), CSAT, and churn rate impact.',
     ].join('\n'),
     tools: { ...webIntelligenceTools },
-    composioToolkits: ['zendesk', 'intercom', 'slack', 'discord'],
+    composioToolkits: ['zendesk', 'intercom', 'slack', 'discord', 'freshdesk', 'front'],
   },
   legalCounsel: {
     name: 'Legal Counsel',
@@ -283,7 +365,7 @@ const specialistRegistry: Record<string, SwarmAgentConfig> = {
       'KPIs: Audit success rate, contract turnaround time, and risk reduction score.',
     ].join('\n'),
     tools: { ...webIntelligenceTools },
-    composioToolkits: ['docusign', 'github', 'notion'],
+    composioToolkits: ['docusign', 'github', 'notion', 'ironclad', 'clio'],
   },
   logisticsLead: {
     name: 'Logistics Lead',
@@ -298,7 +380,7 @@ const specialistRegistry: Record<string, SwarmAgentConfig> = {
       'KPIs: Fulfillment accuracy, shipping time, and inventory turnover.',
     ].join('\n'),
     tools: { ...webIntelligenceTools },
-    composioToolkits: ['shopify', 'ups', 'fedex'],
+    composioToolkits: ['shopify', 'ups', 'fedex', 'shipstation', 'easypost'],
   },
   hrRecruiter: {
     name: 'HR Recruiter',
@@ -313,10 +395,59 @@ const specialistRegistry: Record<string, SwarmAgentConfig> = {
       'KPIs: Time-to-hire, agent uptime, and organizational efficiency.',
     ].join('\n'),
     tools: { ...webIntelligenceTools },
-    composioToolkits: ['greenhouse', 'linkedin', 'notion'],
+    composioToolkits: ['greenhouse', 'linkedin', 'notion', 'workday', 'bamboo_hr'],
+  },
+
+  // ── Security ────────────────────────────────────────────────────────────
+  ciso: {
+    name: 'CISO',
+    department: 'Security',
+    instructions: [
+      'You are the Chief Information Security Officer. You protect the corporation’s digital assets and data.',
+      'OPERATING PROCEDURES:',
+      '1. RECALL: Review all new PRs and technical designs for security vulnerabilities.',
+      '2. DELEGATE: Assign penetration tests to the Security Auditor and IAM audits to DevOps.',
+      '3. AUDIT: Monitor for leaks, OSINT threats, and infrastructure vulnerabilities daily.',
+      '4. EXECUTE: Implement automated security scanning in the GitHub/CI pipelines.',
+      '5. RECORD: Maintain the Security Departmental memory with risk assessments and incident logs.',
+      'KPIs: Security posture score, time to patch vulnerabilities, and audit compliance.',
+    ].join('\n'),
+    tools: { ...shellTools, ...webIntelligenceTools },
+    composioToolkits: ['github', 'sentry', 'cloudflare', 'okta', 'auth0'],
+  },
+  securityAuditor: {
+    name: 'Security Auditor',
+    department: 'Security',
+    instructions: [
+      'You are an offensive and defensive security specialist.',
+      'OPERATING PROCEDURES:',
+      '1. Run penetration tests against new feature deployments.',
+      '2. Audit access logs and IAM policies across the tech stack.',
+      '3. Implement automated security checks in CI/CD pipelines.',
+      '4. Provide security training and best practices to other agents.',
+      'KPIs: Vulnerabilities discovered, patch time, and system hardening score.',
+    ].join('\n'),
+    tools: { ...shellTools, ...webIntelligenceTools },
+    composioToolkits: ['github', 'nmap', 'osint', 'burp_suite', 'metasploit'],
   },
 
   // ── Data & Intelligence ─────────────────────────────────────────────────
+  cdo: {
+    name: 'CDO',
+    department: 'Data',
+    instructions: [
+      'You are the Chief Data Officer. You turn raw data into strategic assets and business intelligence.',
+      'OPERATING PROCEDURES:',
+      '1. RECALL: Define the company’s data architecture and governance policies.',
+      '2. DELEGATE: Assign predictive modeling to the Data Scientist and dashboards to BI Reporter.',
+      '3. AUDIT: Ensure data quality and single-source-of-truth across all departmental memories.',
+      '4. EXECUTE: Automate data extraction from Stripe, HubSpot, and GA4 into the data warehouse.',
+      '5. RECORD: Report strategic data anomalies and market projections to the CEO.',
+      'KPIs: Data utilization rate, forecast accuracy, and data-driven ROI.',
+    ].join('\n'),
+    tools: { ...shellTools },
+    composioToolkits: ['notion', 'snowflake', 'bigquery', 'postgresql', 'databricks'],
+  },
   dataScientist: {
     name: 'Data Scientist',
     department: 'Data',
@@ -330,7 +461,7 @@ const specialistRegistry: Record<string, SwarmAgentConfig> = {
       'KPIs: Data accuracy, insight depth, and forecasting precision.',
     ].join('\n'),
     tools: { ...shellTools },
-    composioToolkits: ['snowflake', 'bigquery', 'postgresql'],
+    composioToolkits: ['snowflake', 'bigquery', 'postgresql', 'python_interpreter', 'r_studio'],
   },
   biReporter: {
     name: 'BI Reporter',
@@ -345,7 +476,7 @@ const specialistRegistry: Record<string, SwarmAgentConfig> = {
       'KPIs: Reporting timeliness, narrative clarity, and dashboard utility.',
     ].join('\n'),
     tools: { ...webIntelligenceTools },
-    composioToolkits: ['github', 'notion', 'slack'],
+    composioToolkits: ['github', 'notion', 'slack', 'tableau', 'power_bi'],
   },
 };
 
