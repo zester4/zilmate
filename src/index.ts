@@ -271,11 +271,11 @@ triggers.command('list').option('-l, --limit <n>', 'limit', '25').option('--show
   try { await listTriggers(o); } catch (e) { printError(friendlyError(e)); process.exitCode = 1; }
 });
 
-triggers.command('create').argument('<trigger>').option('--connected-account <id>', 'account').option('--config <json>', 'config').option('--dry-run', 'dry run').allowUnknownOption(true).allowExcessArguments(true).action(async (t, o, c) => {
+triggers.command('create').argument('<trigger>').option('--connected-account <id>', 'account').option('--config <json>', 'config').option('--dry-run', 'dry run').allowUnknownOption(true).allowExcessArgs(true).action(async (t, o, c) => {
   try { const u = c.args.filter((a) => a !== t); await createTrigger(t, o, u); } catch (e) { printError(friendlyError(e)); process.exitCode = 1; }
 });
 
-triggers.command('listen').option('--trigger <id>', 'id').option('--trigger-slug <slug...>', 'slugs').option('--toolkit <slug...>', 'toolkits').option('--connected-account <id>', 'account').option('--trigger-data <v>', 'data').option('--user-id <id>', 'user').option('--json', 'json').option('--once', 'once').action(async (o) => {
+triggers.command('listen').option('--trigger <id>', 'id').option('--trigger-slug <slug...>', 'slugs').option('--toolkit <slug...>', 'toolkits').option('--connected-account <id>', 'account').option('--json', 'json').action(async (o) => {
   try { await listenToTriggers(o); } catch (e) { printError(friendlyError(e)); process.exitCode = 1; }
 });
 

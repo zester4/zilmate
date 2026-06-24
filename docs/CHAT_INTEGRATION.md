@@ -34,7 +34,7 @@ Once configured, start the production listener. This connects to all enabled pla
 zilmate chat listen
 ```
 
-*   **Persistent Sessions:** ZilMate automatically maps users to unique session IDs (e.g., `chat-slack-U12345`). This ensures that if you start a task on Slack, the agent remembers it when you follow up later.
+*   **Persistent Sessions:** ZilMate automatically maps users to unique session IDs (e.g., `chat-slack-U12345`). This ensures that if you start a task on Slack, the agent remembers it when you follow up on Telegram.
 *   **Shared Brain:** The same Manager used in the CLI handles your chat messages, giving you full orchestration and tool access (Stripe, GitHub, etc.) from your phone.
 
 ## 3. Trigger-Based Proactive Reporting
