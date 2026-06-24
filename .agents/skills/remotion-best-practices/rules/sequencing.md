@@ -46,7 +46,7 @@ const Main = () => {
 }
 ```
 
-This will by default wrap the component in an absolute fill element.  
+This will by default wrap the component in an absolute fill element.
 If the items should not be wrapped, use the `layout` prop:
 
 ```tsx
@@ -57,7 +57,7 @@ If the items should not be wrapped, use the `layout` prop:
 
 ## Premounting
 
-This loads the component in the timeline before it is actually played.  
+This loads the component in the timeline before it is actually played.
 Always premount any `<Sequence>`!
 
 ```tsx

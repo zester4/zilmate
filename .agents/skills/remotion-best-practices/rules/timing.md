@@ -15,7 +15,7 @@ import { interpolate } from "remotion";
 const opacity = interpolate(frame, [0, 100], [0, 1]);
 ```
 
-By default, the values are not clamped, so the value can go outside the range [0, 1].  
+By default, the values are not clamped, so the value can go outside the range [0, 1].
 Here is how they can be clamped:
 
 ```ts title="Going from 0 to 1 over 100 frames with extrapolation"
@@ -85,7 +85,7 @@ const value1 = interpolate(frame, [0, 100], [0, 1], {
 });
 ```
 
-The default easing is `Easing.linear`.  
+The default easing is `Easing.linear`.
 Convexities:
 
 - `Easing.in` — starting slow and accelerating

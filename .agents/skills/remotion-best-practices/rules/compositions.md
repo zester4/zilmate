@@ -9,7 +9,7 @@ A `<Composition>` defines the component, width, height, fps and duration of a re
 
 ## Default Props
 
-Pass `defaultProps` to provide initial values for your component.  
+Pass `defaultProps` to provide initial values for your component.
 Values must be JSON-serializable (`Date`, `Map`, `Set`, and `staticFile()` are supported).
 
 ```tsx
@@ -40,7 +40,7 @@ Use `type` declarations for props rather than `interface` to ensure `defaultProp
 
 ## Folders
 
-Use `<Folder>` to organize compositions in the sidebar.  
+Use `<Folder>` to organize compositions in the sidebar.
 Folder names can only contain letters, numbers, and hyphens.
 
 ```tsx

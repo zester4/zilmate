@@ -1,13 +1,13 @@
 # React Native Skills
 
-**Version 1.0.0**  
-Engineering  
+**Version 1.0.0**
+Engineering
 January 2026
 
-> **Note:**  
-> This document is mainly for agents and LLMs to follow when maintaining,  
-> generating, or refactoring React Native codebases. Humans  
-> may also find it useful, but guidance here is optimized for automation  
+> **Note:**
+> This document is mainly for agents and LLMs to follow when maintaining,
+> generating, or refactoring React Native codebases. Humans
+> may also find it useful, but guidance here is optimized for automation
 > and consistency by AI-assisted workflows.
 
 ---

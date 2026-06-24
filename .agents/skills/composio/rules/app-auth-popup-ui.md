@@ -141,4 +141,3 @@ const { status, connected_account_id } = await initiateComposioAuthFlow(
 - Always clear interval on every exit path
 - Reject immediately if popup cannot be opened
 - Use a stable callback URL path across environments
-
