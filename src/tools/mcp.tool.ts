@@ -5,8 +5,10 @@ import { z } from 'zod';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
+import { homedir } from 'node:os';
 import { workspaceLayout } from '../workspace/paths.js';
 import { emitProgress } from '../runtime/progress.js';
+import { env } from '../config/env.js';
 
 export type MCPServerConfig = {
   name: string;
@@ -25,18 +27,151 @@ export type MCPConfig = {
 
 const activeClients: Map<string, any> = new Map();
 
+function getDefaultMCPServers(): MCPServerConfig[] {
+  const layout = workspaceLayout();
+  const home = homedir();
+
+  return [
+    {
+      name: 'sequential-thinking',
+      type: 'stdio',
+      command: 'npx',
+      args: ['-y', '@modelcontextprotocol/server-sequential-thinking'],
+      enabled: true
+    },
+    {
+      name: 'memory',
+      type: 'stdio',
+      command: 'npx',
+      args: ['-y', '@modelcontextprotocol/server-memory'],
+      enabled: true
+    },
+    {
+      name: 'filesystem',
+      type: 'stdio',
+      command: 'npx',
+      args: ['-y', '@modelcontextprotocol/server-filesystem', layout.root, home],
+      enabled: true
+    },
+    {
+      name: 'git',
+      type: 'stdio',
+      command: 'npx',
+      args: ['-y', '@modelcontextprotocol/server-git'],
+      enabled: true
+    },
+    {
+      name: 'fetch',
+      type: 'stdio',
+      command: 'npx',
+      args: ['-y', '@modelcontextprotocol/server-fetch'],
+      enabled: true
+    },
+    {
+      name: 'playwright',
+      type: 'stdio',
+      command: 'npx',
+      args: ['-y', '@modelcontextprotocol/server-playwright'],
+      enabled: true
+    },
+    {
+      name: 'brave-search',
+      type: 'stdio',
+      command: 'npx',
+      args: ['-y', '@modelcontextprotocol/server-brave-search'],
+      env: { BRAVE_API_KEY: process.env.BRAVE_API_KEY || '' },
+      enabled: Boolean(process.env.BRAVE_API_KEY)
+    },
+    {
+      name: 'wolfram-alpha',
+      type: 'stdio',
+      command: 'npx',
+      args: ['-y', '@modelcontextprotocol/server-wolfram-alpha'],
+      env: { WOLFRAM_ALPHA_APP_ID: process.env.WOLFRAM_ALPHA_APP_ID || '' },
+      enabled: Boolean(process.env.WOLFRAM_ALPHA_APP_ID)
+    },
+    {
+      name: 'sqlite',
+      type: 'stdio',
+      command: 'npx',
+      args: ['-y', '@modelcontextprotocol/server-sqlite', path.join(layout.data, 'mcp.db')],
+      enabled: true
+    },
+    {
+      name: 'postgres',
+      type: 'stdio',
+      command: 'npx',
+      args: ['-y', '@modelcontextprotocol/server-postgres'],
+      env: { DATABASE_URL: process.env.DATABASE_URL || '' },
+      enabled: Boolean(process.env.DATABASE_URL)
+    },
+    {
+      name: 'docker',
+      type: 'stdio',
+      command: 'npx',
+      args: ['-y', '@modelcontextprotocol/server-docker'],
+      enabled: true
+    },
+    {
+      name: 'kubernetes',
+      type: 'stdio',
+      command: 'npx',
+      args: ['-y', '@modelcontextprotocol/server-kubernetes'],
+      enabled: true
+    },
+    {
+      name: 'ffmpeg',
+      type: 'stdio',
+      command: 'npx',
+      args: ['-y', '@modelcontextprotocol/server-ffmpeg'],
+      enabled: true
+    },
+    {
+      name: 'pandoc',
+      type: 'stdio',
+      command: 'npx',
+      args: ['-y', '@modelcontextprotocol/server-pandoc'],
+      enabled: true
+    },
+    {
+      name: 'graphviz',
+      type: 'stdio',
+      command: 'npx',
+      args: ['-y', '@modelcontextprotocol/server-graphviz'],
+      enabled: true
+    },
+    {
+      name: 'obsidian',
+      type: 'stdio',
+      command: 'npx',
+      args: ['-y', '@modelcontextprotocol/server-obsidian'],
+      enabled: true
+    }
+  ];
+}
+
 async function loadMCPConfig(): Promise<MCPConfig> {
   const layout = workspaceLayout();
-  if (!existsSync(layout.mcpConfig)) {
-    return { servers: [] };
+  let config: MCPConfig = { servers: [] };
+
+  if (existsSync(layout.mcpConfig)) {
+    try {
+      const raw = await readFile(layout.mcpConfig, 'utf8');
+      config = JSON.parse(raw);
+    } catch (error) {
+      emitProgress({ type: 'tool:error', label: 'MCP config load failed', detail: String(error) });
+    }
   }
-  try {
-    const raw = await readFile(layout.mcpConfig, 'utf8');
-    return JSON.parse(raw);
-  } catch (error) {
-    emitProgress({ type: 'tool:error', label: 'MCP config load failed', detail: String(error) });
-    return { servers: [] };
+
+  // Merge with defaults
+  const defaults = getDefaultMCPServers();
+  for (const def of defaults) {
+    if (!config.servers.some(s => s.name === def.name)) {
+      config.servers.push(def);
+    }
   }
+
+  return config;
 }
 
 async function saveMCPConfig(config: MCPConfig) {

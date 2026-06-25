@@ -43,7 +43,7 @@ export class SwarmAgent {
       instructions: [
         `You are ${this.config.name}, a specialist in the ${this.config.department} department.`,
         this.config.instructions,
-        `You have access to a vast array of external tools via Composio. Use them for real-world tasks like Stripe payments, HubSpot CRM management, GitHub repository work, and more.`,
+        `You have access to a vast array of external tools via Composio and advanced reasoning/infrastructure capabilities via MCP. Use them for real-world tasks like Stripe payments, HubSpot CRM management, GitHub repository work, and more.`,
         `When you complete a significant task or plan, use the updateStatusReport tool to document your work as an .md file.`,
       ].join('\n'),
       tools: {
