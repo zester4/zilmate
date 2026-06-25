@@ -23,6 +23,8 @@ import { readComposerLine } from './composer.js';
 import { printAssistantTurn, printTips, printUserTurn, printWelcomeCard } from './render.js';
 import { theme } from './theme.js';
 import { runSwarmCli } from './swarm.js';
+import { discoverSkills } from '../skills/loader.js';
+import { printTable } from './format.js';
 
 function transcript(turns: ChatTurn[]) {
   if (turns.length === 0) return '';
@@ -50,7 +52,7 @@ export async function startInteractiveChat(sessionId = 'default') {
   }
 
   const completer = (line: string): [string[], string] => {
-    const completions = ['/exit', '/quit', '/clear', '/help', '/voice', '/swarm', '/model', '/model pick', '/model next', '/heal'];
+    const completions = ['/exit', '/quit', '/clear', '/help', '/voice', '/swarm', '/model', '/model pick', '/model next', '/heal', '/skills'];
     const hits = completions.filter((c) => c.startsWith(line));
     return [hits.length ? hits : completions, line];
   };
@@ -75,7 +77,7 @@ export async function startInteractiveChat(sessionId = 'default') {
   });
   printTips();
   console.log(theme.muted(`Memory: ${memoryBackendName()} · Run: ${runId.slice(0, 8)}`));
-  console.log(theme.muted('Commands: /exit · /clear · /help · /voice · /model · /model pick\n'));
+  console.log(theme.muted('Commands: /exit · /clear · /help · /voice · /model · /model pick · /skills\n'));
 
   try {
     while (true) {
@@ -105,6 +107,7 @@ export async function startInteractiveChat(sessionId = 'default') {
         console.log(`  ${theme.brand('/model')}       Browse AI Gateway models`);
         console.log(`  ${theme.brand('/model pick')} [query]  Choose models (filtered by provider)`);
         console.log(`  ${theme.brand('/model next')}  Next model page`);
+        console.log(`  ${theme.brand('/skills')}      List installed agent skills`);
         console.log(theme.muted('Tip: Use "\\" at the end of a line for simple multiline input.'));
         continue;
       }
@@ -179,7 +182,16 @@ export async function startInteractiveChat(sessionId = 'default') {
         console.log(theme.muted('Voice mode off for this chat session.'));
         continue;
       }
-      if (message === '/clear') {
+            if (message === '/skills') {
+        const skills = await discoverSkills();
+        if (skills.length === 0) {
+          console.log(theme.muted('No local skills found.'));
+        } else {
+          printTable(['Skill ID', 'Name', 'Description'], skills.map(s => [s.id, s.name, s.description]));
+        }
+        continue;
+      }
+if (message === '/clear') {
         turns = [];
         await saveTurns(sessionId, turns);
         console.log(theme.ok('Session cleared.'));

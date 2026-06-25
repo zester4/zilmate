@@ -1,4 +1,5 @@
 import { readdir, readFile } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { existsSync } from 'node:fs';
 import { homedir } from 'node:os';
@@ -48,16 +49,35 @@ async function findSkillFiles(root: string, found: string[] = []) {
 
 function skillRoots() {
   const layout = workspaceLayout();
+
+  // 1. Current working directory paths
   const roots = [
     layout.skills,
     path.resolve('.agents', 'skills'),
     path.resolve('plugins'),
     path.resolve('skills'),
   ];
+
+  // 2. Package-internal skills (where ZilMate is installed)
+  try {
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+    // loader.js is in dist/skills or src/skills
+    const packageRoot = path.resolve(__dirname, '..', '..');
+    const internalSkills = path.join(packageRoot, '.agents', 'skills');
+    if (existsSync(internalSkills)) {
+      roots.push(internalSkills);
+    }
+  } catch (e) {
+    // Fallback if import.meta.url is unavailable
+  }
+
   const extra = (process.env.ZILMATE_SKILL_PATHS || '').split(path.delimiter).map((p) => p.trim()).filter(Boolean);
   roots.push(...extra);
+
   const homeSkills = path.join(homedir(), '.agents', 'skills');
   if (existsSync(homeSkills)) roots.push(homeSkills);
+
   return [...new Set(roots)];
 }
 
