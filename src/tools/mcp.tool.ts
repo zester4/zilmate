@@ -204,6 +204,7 @@ export async function createMCPTools(): Promise<Record<string, any>> {
       }
     } catch (error) {
       emitProgress({ type: 'tool:error', label: `MCP server failed: ${server.name}`, detail: String(error) });
+      console.error(`MCP server ${server.name} error:`, error);
     }
   }
 

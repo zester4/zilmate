@@ -14,7 +14,7 @@ export function printWelcomeCard(options: {
   console.log('');
   console.log(boxLine('top', w, theme.brand));
   console.log(theme.brand('│ ') + theme.textBright('✦ ZilMate CEO Dashboard'.padEnd(pad)));
-  console.log(theme.brand('│ ') + theme.muted(`/help commands · /swarm business · /model pick · /exit`.padEnd(pad)));
+  console.log(theme.brand('│ ') + theme.muted(`/help commands · /swarm business · /model pick · /mcp · /exit`.padEnd(pad)));
   console.log(theme.brand('│ ') + theme.muted(`cwd: ${options.cwd}`.slice(0, pad).padEnd(pad)));
   if (options.workspace) {
     console.log(theme.brand('│ ') + theme.muted(`workspace: ${options.workspace}`.slice(0, pad).padEnd(pad)));
@@ -31,6 +31,7 @@ export function printTips() {
     'Delegate coding to the coding agent; it can spawn appBuilder and qaIntegration sub-coders.',
     'Real-world business tools (Stripe, HubSpot, GitHub) are available through departmental agents.',
     'Run /heal after long sessions to save learnings to your notebook and knowledge graph.',
+    'Use /mcp list to see active Model Context Protocol servers and their tools.',
   ];
   console.log(theme.textBright('Tips for getting started:'));
   tips.forEach((tip, index) => {
