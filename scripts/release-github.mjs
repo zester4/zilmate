@@ -12,7 +12,7 @@ const title = `ZilMate ${tag}`;
 
 const notes = `# ${title}
 
-ZilMate ${tag} — Upgrade to the latest Composio Core SDK (v0.13.1) and Composio Vercel AI SDK adapter (v0.11.0) to eliminate version-mismatch alerts and resolve workspace tool integration/execution bugs.
+ZilMate ${tag} — Critical hotfix for Vercel AI Gateway custom fetch client to resolve connection pool leaks, socket exhaustion, and SSL handshake errors that resulted in raw 'Gateway request failed' responses.
 
 ## Install
 
@@ -25,12 +25,12 @@ zilmate menu
 
 ## Highlights
 
-- **SDK Upgrade: Composio Core & Vercel Integration** — Upgraded \`@composio/core\` to \`0.13.1\` and \`@composio/vercel\` to \`0.11.0\` globally. This resolves the CLI version deprecation warnings ("composio-core is behind") and inherits the latest tool registry optimizations, performance fixes, and enhanced error handling in external multi-agent action integrations.
-- **Cloudflare Tunnel Auto-Setup** — Designed a zero-configuration downloader and manager for \`cloudflared\` binary blobs (platform-specific for Windows, macOS, Linux). Automatically fetches, places, and grants execute permissions to the tunnel binary so that running \`zilmate jobs listen --tunnel\` works instantly without manual downloads.
-- **Interactive Safety Checklists** — Replaced raw prompt confirmation text with a rich interactive terminal TUI containing arrow-key selections and toggleable checkboxes. Safely view, toggle, and approve specific multi-specialist tool executions inline.
-- **Persistent Thinking Status Card** — Created an anchored, rotating thinking status widget pinned cleanly to the bottom of the terminal during chat cycles. Shows active elapsed thinking time and shortcuts while logs/conversations scroll smoothly above it.
-- **High-Fidelity PDF Document Generation** — Solved layout drift and text alignment issues in \`pdfkit\` document generation. Rebuilt lists to use hanging indents with multi-line wrap-margins, stabilized alternating row backgrounds in tables, and preserved boundary word spacing.
-- **Optimized HTTP Gateway Handshakes** — Programmed a custom \`undici\` agent configuration that extends Vercel AI SDK client connections and payload downloads up to 15 minutes globally, completely defeating socket timeout failures.
+- **CRITICAL HOTFIX: Connection Pool & Socket Leak** — Fixed an architectural issue in our Vercel AI SDK gateway fetch wrapper that created a \`new Agent\` (separate connection pool) for every single HTTP request. We now instantiate a single, reused global Undici \`Agent\` dispatcher, completely resolving socket exhaustion, TCP reset drops, and SSL handshake failures (which previously caused intermittent raw \`Gateway request failed\` errors).
+- **TypeScript Type-Safety Compliance** — Adjusted the gateway setup options to spread the \`apiKey\` conditionally only when defined, fully satisfying strict compilation checks under \`exactOptionalPropertyTypes: true\`.
+- **SDK Upgrade: Composio Core & Vercel Integration** — Upgraded \`@composio/core\` to \`0.13.1\` and \`@composio/vercel\` to \`0.11.0\` globally to resolve CLI deprecation warnings and inherit upstream performance and tool registry fixes.
+- **Cloudflare Tunnel Auto-Setup** — Automated downloader and manager for \`cloudflared\` binary blobs across Windows, macOS, and Linux to power \`zilmate jobs listen --tunnel\` with zero manual setup.
+- **Interactive Safety Checklists** — Elegant terminal TUI using checkboxes and keyboard selection to toggle approval on specific multi-specialist tool parameters during execution prompts.
+- **Persistent Thinking Status Card** — Smooth rotating status card widget pinned to the bottom of the chat terminal during model inference to display elapsed time and keyboard shortcuts.
 
 ## Quick Checks
 

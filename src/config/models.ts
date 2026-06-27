@@ -2,18 +2,23 @@ import { gateway, createGateway } from 'ai';
 import { fetch as undiciFetch, Agent } from 'undici';
 import { env, type ImageProvider } from './env.js';
 
+// Program a single global agent dispatcher with 15-minute connection and payload timeouts.
+// Reusing a single agent avoids connection pool leaks, socket exhaustion, and SSL handshake failures.
+const globalDispatcher = new Agent({
+  headersTimeout: 15 * 60 * 1000,
+  bodyTimeout: 15 * 60 * 1000,
+  connect: {
+    timeout: 15 * 60 * 1000, // 15 minutes connection timeout
+  },
+});
+
 // Set up global default provider with 15-minute connection and payload timeouts
 (globalThis as any).AI_SDK_DEFAULT_PROVIDER = createGateway({
+  ...(env.aiGatewayApiKey ? { apiKey: env.aiGatewayApiKey } : {}),
   fetch: (url, init) =>
     (undiciFetch as any)(url as any, {
       ...init,
-      dispatcher: new Agent({
-        headersTimeout: 15 * 60 * 1000,
-        bodyTimeout: 15 * 60 * 1000,
-        connect: {
-          timeout: 15 * 60 * 1000, // 15 minutes connection timeout
-        }
-      }),
+      dispatcher: globalDispatcher,
     }),
 });
 
