@@ -1,0 +1,16 @@
+@import "tailwindcss";
+@theme {
+  --color-brand-peach: #FFF5F0;
+  --color-brand-rose: #C97B86;
+  --color-brand-rose-dark: #8E4A55;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+}
+:root {
+  --background: #FFFFFF;
+  --foreground: #1E1B19;
+}
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
