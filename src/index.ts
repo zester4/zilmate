@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import './pre-init.js';
 import { closeMCPClients } from './tools/mcp.tool.js';
 import { Command } from 'commander';
 import chalk from 'chalk';
@@ -62,7 +63,7 @@ const program = new Command();
 program
   .name('zilmate')
   .description('ZilMate Agent')
-  .version('1.9.6');
+  .version('1.9.8');
 
 program
   .command('welcome')

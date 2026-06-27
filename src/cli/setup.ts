@@ -157,12 +157,17 @@ async function askSecret(rl: readline.Interface, prompt: string, required = fals
     }
   }
 
+  // Pause readline to prevent standard/OS-level character echoes or double-handling during transition
+  rl.pause();
+
   return new Promise<string>((resolve) => {
-    process.stdout.write(prompt);
     const wasRaw = process.stdin.isRaw;
     process.stdin.setRawMode(true);
     process.stdin.resume();
     process.stdin.setEncoding('utf8');
+
+    // Carriage return & clear line to wipe any leaked echoes from bulk copy-paste buffering
+    process.stdout.write('\r\x1b[K' + prompt);
 
     let value = '';
 
@@ -175,11 +180,13 @@ async function askSecret(rl: readline.Interface, prompt: string, required = fals
           process.stdin.setRawMode(wasRaw);
           process.stdin.removeListener('data', onData);
           process.stdout.write('\n');
+          rl.resume(); // Resume readline handler
           const trimmed = value.trim();
           if (required && !trimmed) {
+            rl.pause(); // Pause again for re-prompt
             process.stdin.setRawMode(true);
             process.stdin.on('data', onData);
-            process.stdout.write(chalk.yellow('This value is required.\n') + prompt);
+            process.stdout.write(chalk.yellow('This value is required.\n') + '\r\x1b[K' + prompt);
             value = '';
           } else {
             resolve(trimmed);
@@ -279,8 +286,9 @@ async function writeEnvValues(path: string, values: Map<string, string>, options
 }
 
 async function commandExists(command: string) {
+  const probe = process.platform === 'win32' ? 'where.exe' : 'which';
   try {
-    await execFileAsync(command, ['--version']);
+    await execFileAsync(probe, [command], { windowsHide: true, timeout: 5000 });
     return true;
   } catch {
     return false;

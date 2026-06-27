@@ -1,3 +1,4 @@
+import './pre-init.js';
 import { requireGatewayAuth } from './config/env.js';
 import { applyStoredModelSelections } from './config/model-store.js';
 import { createChatAgent } from './agents/chat.agent.js';

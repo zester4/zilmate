@@ -3,6 +3,9 @@ import { existsSync } from 'node:fs';
 import path from 'node:path';
 import { resolveWorkspaceRoot } from '../workspace/paths.js';
 
+// Set DOTENV_CONFIG_QUIET to suppress verbose dotenv logging
+process.env.DOTENV_CONFIG_QUIET = 'true';
+
 // Load default .env from current directory first (non-overriding)
 loadDotenv({ quiet: true });
 

@@ -53,6 +53,332 @@ async function commandExists(command: string) {
   }
 }
 
+async function simulateMouseAction(action: 'click' | 'double-click' | 'right-click' | 'move' | 'drag' | 'scroll', x?: number, y?: number, endX?: number, endY?: number, scrollAmount?: number) {
+  if (process.platform === 'win32') {
+    let script = '';
+    if (action === 'move' && x !== undefined && y !== undefined) {
+      script = `[System.Windows.Forms.Cursor]::Position = New-Object System.Drawing.Point(${x}, ${y})`;
+    } else if (action === 'click') {
+      script = `
+        Add-Type -MemberDefinition '[DllImport("user32.dll")] public static extern void mouse_event(int flags, int dx, int dy, int data, int extra);' -Name Mouse -Namespace Win32
+        if ($null -ne ${x} -and $null -ne ${y}) { [System.Windows.Forms.Cursor]::Position = New-Object System.Drawing.Point(${x}, ${y}) }
+        [Win32.Mouse]::mouse_event(0x0002, 0, 0, 0, 0) # LEFTDOWN
+        [Win32.Mouse]::mouse_event(0x0004, 0, 0, 0, 0) # LEFTUP
+      `;
+    } else if (action === 'double-click') {
+      script = `
+        Add-Type -MemberDefinition '[DllImport("user32.dll")] public static extern void mouse_event(int flags, int dx, int dy, int data, int extra);' -Name Mouse -Namespace Win32
+        if ($null -ne ${x} -and $null -ne ${y}) { [System.Windows.Forms.Cursor]::Position = New-Object System.Drawing.Point(${x}, ${y}) }
+        [Win32.Mouse]::mouse_event(0x0002, 0, 0, 0, 0)
+        [Win32.Mouse]::mouse_event(0x0004, 0, 0, 0, 0)
+        Start-Sleep -Milliseconds 100
+        [Win32.Mouse]::mouse_event(0x0002, 0, 0, 0, 0)
+        [Win32.Mouse]::mouse_event(0x0004, 0, 0, 0, 0)
+      `;
+    } else if (action === 'right-click') {
+      script = `
+        Add-Type -MemberDefinition '[DllImport("user32.dll")] public static extern void mouse_event(int flags, int dx, int dy, int data, int extra);' -Name Mouse -Namespace Win32
+        if ($null -ne ${x} -and $null -ne ${y}) { [System.Windows.Forms.Cursor]::Position = New-Object System.Drawing.Point(${x}, ${y}) }
+        [Win32.Mouse]::mouse_event(0x0008, 0, 0, 0, 0) # RIGHTDOWN
+        [Win32.Mouse]::mouse_event(0x0010, 0, 0, 0, 0) # RIGHTUP
+      `;
+    } else if (action === 'drag' && x !== undefined && y !== undefined && endX !== undefined && endY !== undefined) {
+      script = `
+        Add-Type -MemberDefinition '[DllImport("user32.dll")] public static extern void mouse_event(int flags, int dx, int dy, int data, int extra);' -Name Mouse -Namespace Win32
+        [System.Windows.Forms.Cursor]::Position = New-Object System.Drawing.Point(${x}, ${y})
+        [Win32.Mouse]::mouse_event(0x0002, 0, 0, 0, 0)
+        Start-Sleep -Milliseconds 100
+        [System.Windows.Forms.Cursor]::Position = New-Object System.Drawing.Point(${endX}, ${endY})
+        Start-Sleep -Milliseconds 100
+        [Win32.Mouse]::mouse_event(0x0004, 0, 0, 0, 0)
+      `;
+    } else if (action === 'scroll') {
+      const amount = scrollAmount ?? 120;
+      script = `
+        Add-Type -MemberDefinition '[DllImport("user32.dll")] public static extern void mouse_event(int flags, int dx, int dy, int data, int extra);' -Name Mouse -Namespace Win32
+        [Win32.Mouse]::mouse_event(0x0800, 0, 0, ${amount}, 0) # WHEEL
+      `;
+    }
+    if (script) {
+      await execFileAsync('powershell.exe', ['-NoProfile', '-Command', `Add-Type -AssemblyName System.Windows.Forms; ${script}`], { windowsHide: true, timeout: 10000 });
+    }
+  } else if (process.platform === 'darwin') {
+    if (x !== undefined && y !== undefined) {
+      await execFileAsync('osascript', ['-e', `tell application "System Events" to click at {${x}, ${y}}`], { timeout: 10000 });
+    }
+  } else {
+    if (await commandExists('xdotool')) {
+      let args: string[] = [];
+      if (action === 'move' && x !== undefined && y !== undefined) {
+        args = ['mousemove', String(x), String(y)];
+      } else if (action === 'click') {
+        if (x !== undefined && y !== undefined) {
+          args = ['mousemove', String(x), String(y), 'click', '1'];
+        } else {
+          args = ['click', '1'];
+        }
+      } else if (action === 'double-click') {
+        if (x !== undefined && y !== undefined) {
+          args = ['mousemove', String(x), String(y), 'click', '--repeat', '2', '1'];
+        } else {
+          args = ['click', '--repeat', '2', '1'];
+        }
+      } else if (action === 'right-click') {
+        if (x !== undefined && y !== undefined) {
+          args = ['mousemove', String(x), String(y), 'click', '3'];
+        } else {
+          args = ['click', '3'];
+        }
+      } else if (action === 'drag' && x !== undefined && y !== undefined && endX !== undefined && endY !== undefined) {
+        args = ['mousemove', String(x), String(y), 'mousedown', '1', 'mousemove', String(endX), String(endY), 'mouseup', '1'];
+      } else if (action === 'scroll') {
+        const btn = (scrollAmount ?? 120) > 0 ? '4' : '5';
+        args = ['click', btn];
+      }
+      if (args.length > 0) {
+        await execFileAsync('xdotool', args, { timeout: 10000 });
+      }
+    } else {
+      throw new Error('xdotool is required for mouse simulation on Linux.');
+    }
+  }
+}
+
+async function showNotification(title: string, message: string) {
+  if (process.platform === 'win32') {
+    const cleanTitle = safeShellText(title);
+    const cleanMsg = safeShellText(message);
+    const script = `
+[Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null
+[Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType = WindowsRuntime] | Out-Null
+$xml = New-Object Windows.Data.Xml.Dom.XmlDocument
+$template = [Windows.UI.Notifications.ToastNotificationManager]::GetTemplateContent([Windows.UI.Notifications.ToastTemplateType]::ToastText02)
+$textNodes = $template.GetElementsByTagName("text")
+$textNodes.Item(0).AppendChild($template.CreateTextNode("${cleanTitle}")) | Out-Null
+$textNodes.Item(1).AppendChild($template.CreateTextNode("${cleanMsg}")) | Out-Null
+$toast = New-Object Windows.UI.Notifications.ToastNotification $template
+$notifier = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier("ZilMate")
+$notifier.Show($toast)
+`;
+    await execFileAsync('powershell.exe', ['-NoProfile', '-Command', script], { windowsHide: true, timeout: 5000 });
+  } else if (process.platform === 'darwin') {
+    const script = `display notification "${safeShellText(message)}" with title "${safeShellText(title)}"`;
+    await execFileAsync('osascript', ['-e', script], { timeout: 5000 });
+  } else {
+    if (await commandExists('notify-send')) {
+      await execFileAsync('notify-send', [title, message], { timeout: 5000 });
+    }
+  }
+}
+
+async function listAudioDevices(): Promise<string[]> {
+  try {
+    if (process.platform === 'win32') {
+      const result = await execFileAsync('ffmpeg', ['-hide_banner', '-list_devices', 'true', '-f', 'dshow', '-i', 'dummy'], { timeout: 5000 });
+      const output = `${result.stdout}\n${result.stderr}`;
+      const names = [...output.matchAll(/"([^"]+)"\s+\(audio\)/gi)].map((match) => match[1]!).filter(Boolean);
+      return names;
+    }
+    if (process.platform === 'darwin') {
+      const result = await execFileAsync('ffmpeg', ['-hide_banner', '-f', 'avfoundation', '-list_devices', 'true', '-i', ''], { timeout: 5000 });
+      const output = `${result.stdout}\n${result.stderr}`;
+      const names = [...output.matchAll(/\[(\d+)\]\s+(.+)/g)].map((match) => match[2]!.trim());
+      return names;
+    }
+    return [];
+  } catch (error) {
+    const output = error && typeof error === 'object' && 'stderr' in error ? String((error as { stderr?: unknown }).stderr || '') : '';
+    if (process.platform === 'win32') {
+      return [...output.matchAll(/"([^"]+)"\s+\(audio\)/gi)].map((match) => match[1]!).filter(Boolean);
+    }
+    if (process.platform === 'darwin') {
+      return [...output.matchAll(/\[(\d+)\]\s+(.+)/g)].map((match) => match[2]!.trim());
+    }
+    return [];
+  }
+}
+
+async function recordAudio(durationSeconds: number) {
+  const outputDir = path.join(path.dirname(screenshotDir), 'audio');
+  await mkdir(outputDir, { recursive: true });
+  const target = path.join(outputDir, `zilmate-audio-${Date.now()}.wav`);
+
+  if (!(await commandExists('ffmpeg'))) {
+    throw new Error('Audio recording requires ffmpeg on PATH.');
+  }
+
+  let inputDevice = '';
+  let format = '';
+
+  if (process.platform === 'win32') {
+    format = 'dshow';
+    const audios = await listAudioDevices();
+    if (audios.length > 0) {
+      inputDevice = `audio=${audios[0]}`;
+    } else {
+      inputDevice = 'audio=default';
+    }
+  } else if (process.platform === 'darwin') {
+    format = 'avfoundation';
+    inputDevice = 'none:0';
+  } else {
+    format = 'alsa';
+    inputDevice = 'default';
+  }
+
+  const args = ['-y', '-f', format, '-i', inputDevice, '-t', String(durationSeconds), target];
+  await execFileAsync('ffmpeg', args, { timeout: (durationSeconds + 15) * 1000, maxBuffer: 2_000_000 });
+  return target;
+}
+
+async function getActiveWindow() {
+  if (process.platform === 'win32') {
+    const script = `
+$sig = @'
+[DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
+[DllImport("user32.dll")] public static extern int GetWindowText(IntPtr hWnd, System.Text.StringBuilder text, int count);
+[DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
+'@
+Add-Type -MemberDefinition $sig -Name Window -Namespace Win32
+$hwnd = [Win32.Window]::GetForegroundWindow()
+if ($hwnd -ne [IntPtr]::Zero) {
+  $title = New-Object System.Text.StringBuilder 256
+  [Win32.Window]::GetWindowText($hwnd, $title, 256) | Out-Null
+  $pid = 0
+  [Win32.Window]::GetWindowThreadProcessId($hwnd, [ref]$pid) | Out-Null
+  $process = Get-Process -Id $pid -ErrorAction SilentlyContinue
+  @{
+    title = $title.ToString()
+    process = $process.ProcessName
+    pid = $pid
+  } | ConvertTo-Json
+} else {
+  "{}"
+}
+`;
+    const { stdout } = await execFileAsync('powershell.exe', ['-NoProfile', '-Command', script], { windowsHide: true, timeout: 5000 });
+    try {
+      return JSON.parse(stdout.trim()) as { title?: string; process?: string; pid?: number };
+    } catch {
+      return {};
+    }
+  } else if (process.platform === 'darwin') {
+    const script = `
+tell application "System Events"
+  set frontApp to first application process whose frontmost is true
+  set appName to name of frontApp
+  tell frontApp
+    try
+      set windowTitle to name of first window
+    on error
+      set windowTitle to ""
+    end try
+  end tell
+  return appName & "|||" & windowTitle
+end tell
+`;
+    const { stdout } = await execFileAsync('osascript', ['-e', script], { timeout: 5000 });
+    const parts = stdout.trim().split('|||');
+    return {
+      process: parts[0] || 'Unknown',
+      title: parts[1] || 'Unknown',
+    };
+  } else {
+    if (await commandExists('xdotool')) {
+      try {
+        const { stdout: windowId } = await execFileAsync('xdotool', ['getactivewindow'], { timeout: 5000 });
+        const { stdout: windowName } = await execFileAsync('xdotool', ['getwindowname', windowId.trim()], { timeout: 5000 });
+        return {
+          title: windowName.trim(),
+          process: 'Unknown',
+        };
+      } catch {
+        return {};
+      }
+    }
+    return {};
+  }
+}
+
+async function controlVolume(action: 'set' | 'mute' | 'unmute' | 'get' | 'media-play-pause' | 'media-next' | 'media-prev', level?: number) {
+  if (process.platform === 'win32') {
+    if (action === 'media-play-pause') {
+      const ps = `Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait([char]179)`;
+      await execFileAsync('powershell.exe', ['-NoProfile', '-Command', ps], { windowsHide: true, timeout: 5000 });
+      return { success: true, action };
+    }
+    if (action === 'media-next') {
+      const ps = `Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait([char]176)`;
+      await execFileAsync('powershell.exe', ['-NoProfile', '-Command', ps], { windowsHide: true, timeout: 5000 });
+      return { success: true, action };
+    }
+    if (action === 'media-prev') {
+      const ps = `Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait([char]177)`;
+      await execFileAsync('powershell.exe', ['-NoProfile', '-Command', ps], { windowsHide: true, timeout: 5000 });
+      return { success: true, action };
+    }
+    if (action === 'mute') {
+      const ps = `Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait([char]173)`;
+      await execFileAsync('powershell.exe', ['-NoProfile', '-Command', ps], { windowsHide: true, timeout: 5000 });
+      return { success: true, action };
+    }
+    if (action === 'unmute') {
+      const ps = `Add-Type -AssemblyName System.Windows.Forms; [System.Windows.Forms.SendKeys]::SendWait([char]173)`;
+      await execFileAsync('powershell.exe', ['-NoProfile', '-Command', ps], { windowsHide: true, timeout: 5000 });
+      return { success: true, action };
+    }
+    if (action === 'set' && level !== undefined) {
+      const script = `
+$wsh = New-Object -ComObject WScript.Shell
+for ($i = 0; $i -lt 50; $i++) { $wsh.SendKeys([char]174) }
+$steps = [Math]::Floor(${level} / 2)
+for ($i = 0; $i -lt $steps; $i++) { $wsh.SendKeys([char]175) }
+`;
+      await execFileAsync('powershell.exe', ['-NoProfile', '-Command', script], { windowsHide: true, timeout: 10000 });
+      return { success: true, action, level };
+    }
+    return { success: false, error: 'Action not supported or requires arguments' };
+  } else if (process.platform === 'darwin') {
+    if (action === 'set' && level !== undefined) {
+      await execFileAsync('osascript', ['-e', `set volume output volume ${level}`], { timeout: 5000 });
+      return { success: true, action, level };
+    }
+    if (action === 'mute') {
+      await execFileAsync('osascript', ['-e', 'set volume with output muted'], { timeout: 5000 });
+      return { success: true, action };
+    }
+    if (action === 'unmute') {
+      await execFileAsync('osascript', ['-e', 'set volume without output muted'], { timeout: 5000 });
+      return { success: true, action };
+    }
+    if (action === 'get') {
+      const { stdout } = await execFileAsync('osascript', ['-e', 'output volume of (get volume settings)'], { timeout: 5000 });
+      return { success: true, level: parseInt(stdout.trim(), 10) };
+    }
+    if (action === 'media-play-pause') {
+      await execFileAsync('osascript', ['-e', 'tell application "System Events" to key code 16'], { timeout: 5000 });
+      return { success: true, action };
+    }
+    return { success: false, error: 'Action not supported or requires arguments' };
+  } else {
+    if (await commandExists('amixer')) {
+      if (action === 'set' && level !== undefined) {
+        await execFileAsync('amixer', ['set', 'Master', `${level}%`], { timeout: 5000 });
+        return { success: true, action, level };
+      }
+      if (action === 'mute') {
+        await execFileAsync('amixer', ['set', 'Master', 'mute'], { timeout: 5000 });
+        return { success: true, action };
+      }
+      if (action === 'unmute') {
+        await execFileAsync('amixer', ['set', 'Master', 'unmute'], { timeout: 5000 });
+        return { success: true, action };
+      }
+    }
+    return { success: false, error: 'amixer is not available on Linux' };
+  }
+}
+
 function cameraInstallHint() {
   if (process.platform === 'win32') return 'Install ffmpeg: winget install Gyan.FFmpeg';
   if (process.platform === 'darwin') return 'Install ffmpeg: brew install ffmpeg';
@@ -640,6 +966,101 @@ export const desktopTools = {
       } catch (error: any) {
         emitProgress({ type: 'tool:error', label: 'Failed to send keyboard input', detail: error.message });
         return { sent: false, error: error.message };
+      }
+    },
+  }),
+
+  simulateMouse: tool({
+    description: 'Simulate mouse movements, clicks, drags, or scrolls. Use for automating GUI interactions, clicking buttons, scrollable areas, etc.',
+    inputSchema: z.object({
+      action: z.enum(['click', 'double-click', 'right-click', 'move', 'drag', 'scroll']).describe('Mouse action to simulate'),
+      x: z.number().int().optional().describe('X coordinate (pixels) from the top-left of the primary screen'),
+      y: z.number().int().optional().describe('Y coordinate (pixels) from the top-left of the primary screen'),
+      endX: z.number().int().optional().describe('Ending X coordinate for drag action'),
+      endY: z.number().int().optional().describe('Ending Y coordinate for drag action'),
+      scrollAmount: z.number().int().optional().describe('Amount to scroll (default 120. Positive for scroll up, negative for scroll down)'),
+    }),
+    execute: async ({ action, x, y, endX, endY, scrollAmount }) => {
+      emitProgress({ type: 'tool:start', label: 'Simulating mouse action', detail: `${action} at (${x ?? 'current'}, ${y ?? 'current'})` });
+      try {
+        await simulateMouseAction(action, x, y, endX, endY, scrollAmount);
+        emitProgress({ type: 'tool:end', label: 'Mouse action simulated' });
+        return { success: true, action };
+      } catch (error: any) {
+        emitProgress({ type: 'tool:error', label: 'Mouse action failed', detail: error.message });
+        return { success: false, error: error.message };
+      }
+    },
+  }),
+
+  displaySystemNotification: tool({
+    description: 'Display a native OS toast, banner, or alert notification with a custom title and message.',
+    inputSchema: z.object({
+      title: z.string().min(1).describe('The title of the notification'),
+      message: z.string().min(1).describe('The main body message of the notification'),
+    }),
+    execute: async ({ title, message }) => {
+      emitProgress({ type: 'tool:start', label: 'Displaying system notification', detail: title });
+      try {
+        await showNotification(title, message);
+        emitProgress({ type: 'tool:end', label: 'System notification displayed' });
+        return { success: true };
+      } catch (error: any) {
+        emitProgress({ type: 'tool:error', label: 'Failed to display notification', detail: error.message });
+        return { success: false, error: error.message };
+      }
+    },
+  }),
+
+  recordAudioSnippet: tool({
+    description: 'Record an audio snippet from the microphone/audio input device as a WAV file. Requires ffmpeg.',
+    inputSchema: z.object({
+      durationSeconds: z.number().int().min(1).max(60).describe('Duration of the audio recording in seconds (max 60)'),
+    }),
+    execute: async ({ durationSeconds }) => {
+      emitProgress({ type: 'tool:start', label: 'Recording audio snippet', detail: `${durationSeconds}s` });
+      try {
+        const file = await recordAudio(durationSeconds);
+        emitProgress({ type: 'tool:end', label: 'Audio snippet recorded', detail: file });
+        return { success: true, file, durationSeconds };
+      } catch (error: any) {
+        emitProgress({ type: 'tool:error', label: 'Failed to record audio', detail: error.message });
+        return { success: false, error: error.message };
+      }
+    },
+  }),
+
+  getActiveWindowContext: tool({
+    description: 'Retrieve context of the active, foreground window, including application process name, window title, and process ID (PID) if available.',
+    inputSchema: z.object({}),
+    execute: async () => {
+      emitProgress({ type: 'tool:start', label: 'Retrieving active window context' });
+      try {
+        const context = await getActiveWindow();
+        emitProgress({ type: 'tool:end', label: 'Active window context retrieved', detail: context.title || context.process || 'Unknown' });
+        return { success: true, ...context };
+      } catch (error: any) {
+        emitProgress({ type: 'tool:error', label: 'Failed to retrieve active window context', detail: error.message });
+        return { success: false, error: error.message };
+      }
+    },
+  }),
+
+  controlSystemVolume: tool({
+    description: 'Control system audio volume, mute status, or simulate media playback keys (play/pause, next, previous track).',
+    inputSchema: z.object({
+      action: z.enum(['set', 'mute', 'unmute', 'get', 'media-play-pause', 'media-next', 'media-prev']).describe('Volume or media key action to perform'),
+      level: z.number().int().min(0).max(100).optional().describe('Volume percentage level (0 to 100), required only when action is "set"'),
+    }),
+    execute: async ({ action, level }) => {
+      emitProgress({ type: 'tool:start', label: 'Controlling system volume/media', detail: action });
+      try {
+        const result = await controlVolume(action, level);
+        emitProgress({ type: 'tool:end', label: 'System volume/media controlled' });
+        return result;
+      } catch (error: any) {
+        emitProgress({ type: 'tool:error', label: 'Failed to control system volume/media', detail: error.message });
+        return { success: false, error: error.message };
       }
     },
   }),

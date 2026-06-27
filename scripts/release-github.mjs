@@ -12,7 +12,7 @@ const title = `ZilMate ${tag}`;
 
 const notes = `# ${title}
 
-ZilMate ${tag} — Fully continuous conversational threads, multi-line terminal tables, background shell utilities, and direct messaging for multi-platform integrations.
+ZilMate ${tag} — Cross-platform premium desktop control suite, native system alerts, audio recording diagnostics, and a warm, personal-partner conversational interface.
 
 ## Install
 
@@ -25,12 +25,9 @@ zilmate menu
 
 ## Highlights
 
-- **Word-Wrapped Terminal Tables** — Replaced flat table cell truncation with a smart word-wrapping renderer (\`wrapCellText\` and \`renderRowLines\`) inside \`src/cli/format.ts\`. This ensures long description texts and complex schedules are shown completely across beautifully structured multiline terminal rows.
-- **Asynchronous Background Shell Tools Suite** — Engineered five advanced, type-safe execution tools (\`executeCommandAsync\`, \`checkCommandStatus\`, \`sendInputToProcess\`, \`killCommand\`, and \`listBackgroundCommands\`) in \`src/tools/shell.tool.ts\` for initiating and managing non-blocking tasks.
-- **Telegram Concurrency Conflict (LockError) Resolved** — Configured \`concurrency: "queue"\` on active chat instances inside \`src/cli/chat.ts\` to sequence overlapping long-polling events and avoid lock acquisition failure errors.
-- **Interactive Chat Integration Portal CLI** — Added a dedicated \`"zilmate chat"\` entry in \`package.json\` that triggers a beautiful keyboard-guided terminal UI to toggle Slack, Telegram, and iMessage listeners with multi-select checkboxes.
-- **Telegram-Tailored Formatting Rules** — Dynamic platform detection structures the AI responses with bold titles instead of hashes, formatting tables as preformatted monospace blocks for a premium presentation.
-- **Continuous Conversational Chat SDK Support** — Fully integrated event routing inside \`src/cli/chat.ts\` for multi-turn conversational capabilities over Telegram and Slack without repeating mentions.
+- **5 Premium Cross-Platform Desktop Tools** — Added powerful, high-fidelity native system tools including \`simulateMouse\` (click, move, drag, scroll), \`displaySystemNotification\` (native OS notifications), \`recordAudioSnippet\` (high-fidelity WAV recording via ffmpeg), \`getActiveWindowContext\` (tracking foreground process, title, and PID), and \`controlSystemVolume\` (volume controls, mute, and media playback keys).
+- **Warm, Supportive Friendly Persona** — Re-aligned the core manager instructions to prioritize a personal partnership, warmth, and reliable trust over sterile, corporate roles, recognizing ZilMate acts as the CEO of his own digital corporation.
+- **Strict TypeScript 6.0 Type-Safety** — Successfully integrated all changes and types to guarantee robust compiling checks and seamless edge-case resolution (such as undefined window contexts).
 
 ## Quick Checks
 
