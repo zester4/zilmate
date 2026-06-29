@@ -83,7 +83,7 @@ run(
     'create',
     tag,
     '--repo',
-    'zester4/zilo-manager',
+    'zester4/zilmate',
     '--title',
     title,
     '--notes-file',

@@ -110,12 +110,12 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/zester4/zilo-manager.git"
+    "url": "git+https://github.com/zester4/zilmate.git"
   },
   "bugs": {
-    "url": "https://github.com/zester4/zilo-manager/issues"
+    "url": "https://github.com/zester4/zilmate/issues"
   },
-  "homepage": "https://github.com/zester4/zilo-manager#readme",
+  "homepage": "https://github.com/zester4/zilmate#readme",
   "engines": {
     "node": ">=20.0.0"
   },

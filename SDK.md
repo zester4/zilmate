@@ -378,6 +378,6 @@ import {
 
 ## Learn more
 
-- Repository: https://github.com/zester4/zilo-manager
+- Repository: https://github.com/zester4/zilmate
 - Agent skill: `plugins/zilmate/skills/zilmate/SKILL.md`
 - AI SDK patterns: https://sdk.vercel.ai/docs

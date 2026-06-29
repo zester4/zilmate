@@ -19,7 +19,7 @@ ZilMate can also work with local files inside safe configured roots: search file
 
 It can also use approved desktop context: read/write clipboard text, take screenshots, open the laptop camera for a still photo, and analyze screenshots/photos with `google/gemini-3.1-flash-lite` by default. Screenshot analysis describes visible UI, extracts visible text when possible, identifies errors or unusual states, and can optionally search the web for troubleshooting context. Camera photo analysis describes visible objects, environments, documents, devices, or issues without identifying people or inferring sensitive traits.
 
-The GitHub project can remain `zilo-manager`, but the installable npm package and command are both `zilmate`.
+The GitHub project and repository name is now `zilmate`, matching the installable npm package and command.
 
 ---
 
@@ -60,7 +60,7 @@ zilmate version
 Before npm publishing, install directly from the GitHub repository:
 
 ```powershell
-npm install -g github:zester4/zilo-manager
+npm install -g github:zester4/zilmate
 zilmate setup
 zilmate --help
 ```
@@ -70,7 +70,7 @@ zilmate --help
 From PowerShell, run the automatic installer helper to trigger the complete first-use pipeline:
 
 ```powershell
-iwr https://raw.githubusercontent.com/zester4/zilo-manager/main/install.ps1 | iex
+iwr https://raw.githubusercontent.com/zester4/zilmate/main/install.ps1 | iex
 ```
 
 The installer performs the following flow:
@@ -84,15 +84,15 @@ The installer performs the following flow:
 
 * Install without launching the guided setup:
   ```powershell
-  iex "& { $((iwr -UseBasicParsing https://raw.githubusercontent.com/zester4/zilo-manager/main/install.ps1).Content) } -NoSetup"
+  iex "& { $((iwr -UseBasicParsing https://raw.githubusercontent.com/zester4/zilmate/main/install.ps1).Content) } -NoSetup"
   ```
 * Skip Gateway ping verification or instant chat launch:
   ```powershell
-  iex "& { $((iwr -UseBasicParsing https://raw.githubusercontent.com/zester4/zilo-manager/main/install.ps1).Content) } -NoPing -NoTalk"
+  iex "& { $((iwr -UseBasicParsing https://raw.githubusercontent.com/zester4/zilmate/main/install.ps1).Content) } -NoPing -NoTalk"
   ```
 * Force install from NPM instead of GitHub:
   ```powershell
-  iex "& { $((iwr -UseBasicParsing https://raw.githubusercontent.com/zester4/zilo-manager/main/install.ps1).Content) } -Source npm"
+  iex "& { $((iwr -UseBasicParsing https://raw.githubusercontent.com/zester4/zilmate/main/install.ps1).Content) } -Source npm"
   ```
 
 ---
@@ -243,8 +243,8 @@ zilmate models
 zilmate apps status
 zilmate triggers listen
 zilmate triggers types github
-zilmate triggers create GITHUB_BRANCH_CREATED_TRIGGER --dry-run --owner zester4 --repo zilo-manager
-zilmate triggers create GITHUB_COMMIT_EVENT --owner zester4 --repo zilo-manager
+zilmate triggers create GITHUB_BRANCH_CREATED_TRIGGER --dry-run --owner zester4 --repo zilmate
+zilmate triggers create GITHUB_COMMIT_EVENT --owner zester4 --repo zilmate
 zilmate triggers list
 zilmate jobs create "Research today's priority updates and summarize them"
 zilmate jobs create "Prepare my weekday morning briefing" --schedule "daily"

@@ -15,7 +15,7 @@ Follow these steps to set up and run ZilMate in your local environment.
 1.  Clone the repository:
     ```bash
     git clone <repository-url>
-    cd zilo-manager
+    cd zilmate
     ```
 
 2.  Install dependencies:

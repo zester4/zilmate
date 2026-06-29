@@ -1,7 +1,7 @@
 param(
   [ValidateSet("github", "npm")]
   [string]$Source = "github",
-  [string]$GitHubPackage = "github:zester4/zilo-manager",
+  [string]$GitHubPackage = "github:zester4/zilmate",
   [string]$NpmPackage = "zilmate",
   [switch]$NoSetup,
   [switch]$NoPing,

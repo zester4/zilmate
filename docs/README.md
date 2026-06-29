@@ -115,4 +115,4 @@ zilmate jobs worker
 ```
 
 ---
-*For support, security disclosures, or to contribute to the swarm pipelines, please check [deployment.md](deployment.md) or open an issue on the [ZilMate Repository](https://github.com/zester4/zilo-manager).*
+*For support, security disclosures, or to contribute to the swarm pipelines, please check [deployment.md](deployment.md) or open an issue on the [ZilMate Repository](https://github.com/zester4/zilmate).*
