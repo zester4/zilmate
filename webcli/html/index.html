@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZilMate Swarm Command Center</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="flex">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <span>ZilMate</span>
+            </div>
+            <div class="logo-sub">Swarm Command Center</div>
+        </div>
+
+        <nav class="nav-group">
+            <div class="nav-item active" data-tab="chat">
+                <span>💬</span> Talk to ZilMate
+            </div>
+            <div class="nav-item" data-tab="swarm">
+                <span>🐝</span> Swarm Dashboard
+            </div>
+            <div class="nav-item" data-tab="jobs">
+                <span>📅</span> Background Jobs
+            </div>
+            <div class="nav-item" data-tab="memory">
+                <span>🧠</span> Digital Memory
+            </div>
+            <div class="nav-item" data-tab="wiki">
+                <span>📚</span> Corporate Wiki
+            </div>
+            <div class="nav-item" data-tab="apps">
+                <span>🔌</span> Connected Apps
+            </div>
+            <div class="nav-item" data-tab="doctor">
+                <span>🩺</span> System Doctor
+            </div>
+            <div class="nav-item" data-tab="setup">
+                <span>⚙️</span> Configuration
+            </div>
+        </nav>
+
+        <div class="sidebar-footer">
+            <button class="btn btn-primary" style="width: 100%;">Deploy Swarm</button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main">
+        <header>
+            <h2 class="page-title">Talk to ZilMate</h2>
+            <div class="header-actions">
+                <div class="user-badge">
+                    <span style="width: 8px; height: 8px; background: var(--success); border-radius: 50%;"></span>
+                    v3.5 Production
+                </div>
+                <div class="avatar" style="background-color: var(--primary-light)">JD</div>
+            </div>
+        </header>
+
+        <section class="content-area">
+            <div class="terminal-view">
+                <div class="terminal-head">
+                    <div class="window-dots">
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                    </div>
+                    <div style="font-size: 11px; font-weight: 600; color: var(--on-surface-variant)">interactive-session --swarm</div>
+                    <div style="width: 40px"></div>
+                </div>
+
+                <div class="terminal-body">
+                    <!-- Dynamic content managed by script.js -->
+                </div>
+
+                <div class="terminal-input-row">
+                    <span class="prompt-symbol">❯</span>
+                    <input type="text" class="input-field" placeholder="Type a command or ask anything..." autofocus>
+                    <div style="font-size: 10px; color: var(--outline); font-weight: 600; background: white; padding: 2px 6px; border: 1px solid var(--outline-variant); border-radius: 4px;">ENTER</div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
