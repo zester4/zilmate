@@ -7,14 +7,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
-<body class="flex">
+<body>
 
     <!-- Sidebar -->
     <aside class="sidebar">
-        <div class="sidebar-header">
-            <div class="logo">
-                <span>ZilMate</span>
-            </div>
+        <div class="logo-area">
+            <div class="logo">ZilMate</div>
             <div class="logo-sub">Swarm Command Center</div>
         </div>
 
@@ -23,22 +21,22 @@
                 <span>💬</span> Talk to ZilMate
             </div>
             <div class="nav-item" data-tab="swarm">
-                <span>🐝</span> Swarm Dashboard
+                <span>🐝</span> Swarm Hierarchy
             </div>
-            <div class="nav-item" data-tab="jobs">
-                <span>📅</span> Background Jobs
+            <div class="nav-item" data-tab="traces">
+                <span>📊</span> Live Traces
             </div>
             <div class="nav-item" data-tab="memory">
-                <span>🧠</span> Digital Memory
+                <span>🧠</span> Corporate Memory
             </div>
             <div class="nav-item" data-tab="wiki">
-                <span>📚</span> Corporate Wiki
-            </div>
-            <div class="nav-item" data-tab="apps">
-                <span>🔌</span> Connected Apps
+                <span>📚</span> Intelligence Wiki
             </div>
             <div class="nav-item" data-tab="doctor">
-                <span>🩺</span> System Doctor
+                <span>🩺</span> System Health
+            </div>
+            <div class="nav-item" data-tab="apps">
+                <span>🔌</span> App Connectivity
             </div>
             <div class="nav-item" data-tab="setup">
                 <span>⚙️</span> Configuration
@@ -46,46 +44,86 @@
         </nav>
 
         <div class="sidebar-footer">
-            <button class="btn btn-primary" style="width: 100%;">Deploy Swarm</button>
+            <button class="btn btn-primary" style="width: 100%;">Initialize Swarm</button>
         </div>
     </aside>
 
-    <!-- Main Content -->
+    <!-- Main Content Area -->
     <main class="main">
         <header>
             <h2 class="page-title">Talk to ZilMate</h2>
-            <div class="header-actions">
-                <div class="user-badge">
-                    <span style="width: 8px; height: 8px; background: var(--success); border-radius: 50%;"></span>
-                    v3.5 Production
+            <div class="header-meta">
+                <div class="status-pill">
+                    <span class="pulsar"></span>
+                    Digital Corporation Active
                 </div>
-                <div class="avatar" style="background-color: var(--primary-light)">JD</div>
+                <div class="user-badge" style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 12px; font-weight: 600; color: var(--on-surface-variant);">Commander</span>
+                    <div class="avatar" style="background: var(--primary); width: 32px; height: 32px;">JD</div>
+                </div>
             </div>
         </header>
 
-        <section class="content-area">
-            <div class="terminal-view">
-                <div class="terminal-head">
-                    <div class="window-dots">
-                        <div class="dot"></div>
-                        <div class="dot"></div>
-                        <div class="dot"></div>
+        <!-- View: Interactive Chat -->
+        <div id="view-chat" class="view-container">
+            <div class="terminal-wrapper">
+                <div class="terminal-header">
+                    <div class="terminal-dots">
+                        <div class="terminal-dot"></div>
+                        <div class="terminal-dot"></div>
+                        <div class="terminal-dot"></div>
                     </div>
-                    <div style="font-size: 11px; font-weight: 600; color: var(--on-surface-variant)">interactive-session --swarm</div>
-                    <div style="width: 40px"></div>
+                    <div style="font-size: 11px; font-weight: 700; color: var(--on-surface-variant); opacity: 0.8;">bash --interactive --session-id=default</div>
+                    <div style="width: 40px;"></div>
                 </div>
-
-                <div class="terminal-body">
-                    <!-- Dynamic content managed by script.js -->
+                <div id="chat-output" class="terminal-scroll">
+                    <!-- Messages populated by JS -->
                 </div>
-
-                <div class="terminal-input-row">
-                    <span class="prompt-symbol">❯</span>
-                    <input type="text" class="input-field" placeholder="Type a command or ask anything..." autofocus>
-                    <div style="font-size: 10px; color: var(--outline); font-weight: 600; background: white; padding: 2px 6px; border: 1px solid var(--outline-variant); border-radius: 4px;">ENTER</div>
+                <div class="terminal-input-bar">
+                    <span class="prompt">❯</span>
+                    <input type="text" id="chat-input" class="cli-input" placeholder="Enter task or question for the Swarm..." autofocus>
+                    <kbd style="background: white; border: 1px solid var(--outline-variant); padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; color: var(--outline);">ENTER</kbd>
                 </div>
             </div>
-        </section>
+        </div>
+
+        <!-- View: Swarm Hierarchy -->
+        <div id="view-swarm" class="view-container hidden">
+            <div class="grid" id="swarm-grid">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+
+        <!-- View: Live Traces -->
+        <div id="view-traces" class="view-container hidden">
+            <div class="card" style="flex: 1; display: flex; flex-direction: column;">
+                <div class="card-head">
+                    <span class="card-title">Active Execution Spans</span>
+                    <span class="status-pill">Live Updates</span>
+                </div>
+                <div id="trace-container" style="flex: 1; overflow-y: auto;">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- View: System Doctor -->
+        <div id="view-doctor" class="view-container hidden">
+            <div class="grid" id="doctor-grid">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+
+        <!-- Other views would follow same pattern -->
+        <div id="view-other" class="view-container hidden">
+            <div class="card">
+                <div class="card-head">
+                    <span class="card-title">Module Under Construction</span>
+                </div>
+                <p style="color: var(--on-surface-variant); font-size: 14px;">This module is being integrated with the real-time agent bridge.</p>
+            </div>
+        </div>
+
     </main>
 
     <script src="script.js"></script>
