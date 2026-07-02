@@ -265,18 +265,95 @@ export function startDaemon() {
       return;
     }
 
-    // CSRF & Cross-Origin Security: Require Authorization header matching local sessionToken for all data endpoints
+    // CSRF & Cross-Origin Security: Require Authorization header matching local sessionToken or webhook secret
     const authHeader = req.headers['authorization'];
-    if (!authHeader || authHeader !== `Bearer ${sessionToken}`) {
+    const webhookSecret = env.zilmateJobWebhookSecret;
+    const isWebhookAuth = webhookSecret && authHeader === `Bearer ${webhookSecret}`;
+    const isSessionAuth = authHeader === `Bearer ${sessionToken}`;
+
+    if (!authHeader || (!isSessionAuth && !isWebhookAuth)) {
       console.warn(theme.error('[Ubiquity] CSRF/Unauthorized request blocked from origin:'), req.headers['origin']);
       res.writeHead(401, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Unauthorized: Local session token mismatch' }));
+      res.end(JSON.stringify({ error: 'Unauthorized: Local session token or webhook secret mismatch' }));
       return;
     }
 
     // 3. Authenticated process & API endpoints
     if (req.method === 'POST' && pathname === '/process') {
       await handleProcessRequest(req, res);
+      return;
+    }
+
+    if (req.method === 'POST' && pathname === '/api/webhooks/listeners') {
+      let body = '';
+      req.on('data', chunk => body += chunk);
+      req.on('end', async () => {
+        try {
+          const data = JSON.parse(body || '{}');
+          
+          // Construct standard trigger payload complying with IncomingTriggerPayload
+          const eventId = data.id || `evt_${randomBytes(8).toString('hex')}`;
+          const eventUuid = data.uuid || eventId;
+          const triggerSlug = data.triggerSlug || 'custom_webhook_event';
+          const toolkitSlug = data.toolkitSlug || 'custom_webhook';
+          const userId = data.userId || 'system';
+          const payload = data.payload || data;
+
+          const event = {
+            id: eventId,
+            uuid: eventUuid,
+            triggerSlug,
+            toolkitSlug,
+            userId,
+            payload,
+            metadata: {
+              id: eventId,
+              uuid: eventUuid,
+              triggerSlug,
+              toolkitSlug,
+              triggerConfig: data.triggerConfig || {},
+              triggerData: data.triggerData || undefined,
+              connectedAccount: data.connectedAccount || {
+                status: 'ACTIVE',
+                authConfigUUID: 'system-auth',
+              },
+            }
+          };
+
+          const { classifyTriggerWithContext, buildOrchestrationPlanWithRouting } = await import('../jobs/trigger-router.js');
+          const { orchestrateComposioTrigger } = await import('../jobs/trigger-orchestrator.js');
+          const { runJob } = await import('../jobs/runner.js');
+
+          // Build dynamic routing plan
+          const plan = await buildOrchestrationPlanWithRouting(event as any);
+          
+          // Queue jobs in DB
+          const queuedJobs = await orchestrateComposioTrigger(event as any, { plan });
+
+          // Execute immediate jobs in background
+          for (const job of queuedJobs) {
+            if (!job.schedule) {
+              runJob(job.id, { rescheduleRecurring: true }).catch((err) => {
+                console.error(`[Webhook Background Runner] Job ${job.id} failed:`, err);
+              });
+            }
+          }
+
+          res.writeHead(202, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({
+            status: 'accepted',
+            chainId: plan.chainId,
+            priority: plan.priority,
+            route: plan.route,
+            category: plan.category,
+            reasoning: plan.reasoning,
+            queuedJobs: queuedJobs.map((j) => ({ id: j.id, task: j.task, status: j.status }))
+          }));
+        } catch (error) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: error instanceof Error ? error.message : String(error) }));
+        }
+      });
       return;
     }
 

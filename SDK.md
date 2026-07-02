@@ -51,6 +51,8 @@ The SDK documentation is split into specialized, deep-dive chapters. Explore eac
    - Safety sandbox system calls: DevOps Docker container logs, SysOps networking pings/ports, tiered AWS S3/GCS/Vercel Cloud Storage, and FFmpeg transcoder engines.
 8. **[📅 8. Durable Jobs & Background Scheduling](file:///c:/Users/mseyy/Downloads/zilo-manager/sdk/jobs-scheduling.md)**
    - Registering recurring background jobs, enqueuing delayed tasks, setting up serverless QStash webhook endpoints, and running local developer tunnels.
+9. **[💸 9. Swarm Capability Expansions](file:///c:/Users/mseyy/Downloads/zilo-manager/sdk/expansions.md)**
+   - Swarm Virtual Treasury budget controls, proactive incoming webhooks listener routing, and automated trace-driven prompt self-learning (RLAIH).
 
 ---
 
@@ -96,6 +98,7 @@ The SDK exposes programmatic parity for every core CLI feature, enabling develop
 | `zilmate talk` | `createZilMate().manager({ message })` | General planning and open-ended tool loops |
 | `zilmate coding "..."` | `createZilMate().coding({ prompt })` | Full-stack implementation and self-healing builds |
 | `zilmate jobs worker` | `createZilMate().runDueJobs()` | Triggers background cron tasks |
+| `zilmate optimize` | `runPostSessionOptimization()` | Executes trace-guided prompt self-tuning and harvesting |
 | `/model pick` | `saveModelSelection(agent, model)` | Persists custom LLM routing settings |
 | `zilmate doctor` | (Diagnostics built-in to `situation()`) | Validates environment, folders, and networks |
 | `zilmate setup` | (Automatic on `createZilMate()` initialization) | Bootstraps configuration files and path trees |

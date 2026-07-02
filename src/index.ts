@@ -1058,6 +1058,29 @@ program
   });
 
 program
+  .command('optimize')
+  .option('-s, --session <id>', 'swarm session id to optimize', 'default')
+  .description('Harvest trace histories to reprogram and optimize Swarm Agent prompts based on past successes/failures')
+  .action(async (options: { session: string }) => {
+    try {
+      requireGatewayAuth();
+      const { runPostSessionOptimization } = await import('./observability/optimizer.js');
+      const { printProgress } = await import('./cli/format.js');
+      
+      printProgress({ type: 'thinking', label: 'Running manual session optimization', detail: options.session });
+      const result = await runPostSessionOptimization(options.session);
+      if (result.success) {
+        console.log(chalk.greenBright.bold(`\n🎉 Optimization completed successfully! Published ${result.guidelinesCount} guidelines.`));
+      } else {
+        console.log(chalk.red.bold(`\n❌ Optimization completed, but no new guidelines were synthesized.`));
+      }
+    } catch (error) {
+      printError(friendlyError(error));
+      process.exitCode = 1;
+    }
+  });
+
+program
   .command('trace')
   .option('-s, --session <id>', 'swarm session id', 'default')
   .option('--html', 'compile and open the interactive visual HTML dashboard for this session')
