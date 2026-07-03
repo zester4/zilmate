@@ -41,7 +41,7 @@ export async function handleChatMessage(input: {
 
   const zilmate = createZilMate({
     sessionId,
-    onProgress: async (event) => {
+    progress: async (event) => {
       if (event.type === 'step' && input.onStep) {
         await input.onStep(event.label);
       }

@@ -177,7 +177,7 @@ export const cloudTools = {
           const { stdout } = await execFileAsync('gsutil', ['ls', '-l', gcsUri], { windowsHide: true, timeout: 15000 });
           const lines = stdout.trim().split(/\r?\n/).filter(Boolean);
 
-          const files = [];
+          const files: any[] = [];
           for (const line of lines) {
             const trimmed = line.trim();
             if (trimmed.startsWith('TOTAL:')) continue;
