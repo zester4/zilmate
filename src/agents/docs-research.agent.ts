@@ -5,6 +5,7 @@ import { docsSearchTool } from '../tools/docs-search.tool.js';
 import { appKnowledgeTool } from '../tools/app-knowledge.tool.js';
 import { createScratchpadTools } from '../tools/scratchpad.tool.js';
 import { ziloDocsTools } from '../tools/zilo-docs.tool.js';
+import { htmlReportTools } from '../tools/html-report.tool.js';
 import { deepResearchTool, webCrawlTool, webExtractTool, webMapTool, webSearchTool } from '../tools/web-search.tool.js';
 import { timeTools } from '../tools/time.tool.js';
 import { limits } from '../safety/limits.js';
@@ -26,6 +27,7 @@ export function createDocsResearchAgent(runId = 'default') {
       deepResearch: deepResearchTool,
       appKnowledge: appKnowledgeTool,
       ...scratchpadTools,
+      ...htmlReportTools,
     },
     stopWhen: stepCountIs(limits.subagentSteps),
   });

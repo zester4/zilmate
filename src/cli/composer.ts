@@ -1,11 +1,34 @@
 // src/cli/composer.ts
 import readline from 'node:readline/promises';
 import { theme, termWidth, boxLine, wrapText } from './theme.js';
+import { resetProgressDisplay } from './format.js';
+
+function enableBracketedPaste() {
+  if (process.stdin.isTTY) {
+    process.stdout.write('\x1b[?2004h');
+  }
+}
+
+function disableBracketedPaste() {
+  if (process.stdin.isTTY) {
+    process.stdout.write('\x1b[?2004l');
+  }
+}
+
+function showCursor() {
+  if (process.stdout.isTTY) {
+    process.stdout.write('\x1b[?25h');
+  }
+}
 
 export async function readComposerLine(
   rl: readline.Interface,
   placeholder = 'Try "plan my week" or "build a Next.js dashboard"',
 ): Promise<string> {
+  resetProgressDisplay(false);
+  disableBracketedPaste();
+  showCursor();
+
   const w = termWidth(92);
 
   console.log('');
@@ -16,130 +39,131 @@ export async function readComposerLine(
 
   let multilineMode = false;
 
-  const finalMessage = await new Promise<string>((resolve) => {
-    let buffer: string[] = [];
-    let timeout: NodeJS.Timeout | null = null;
-    let bracketedPasteActive = false;
+  try {
+    enableBracketedPaste();
 
-    // Enable Bracketed Paste Mode
-    if (process.stdin.isTTY) {
-      process.stdout.write('\x1b[?2004h');
-    }
+    const finalMessage = await new Promise<string>((resolve, reject) => {
+      let buffer: string[] = [];
+      let timeout: NodeJS.Timeout | null = null;
+      let bracketedPasteActive = false;
+      let settled = false;
 
-    const cleanup = () => {
-      if (process.stdin.isTTY) {
-        process.stdout.write('\x1b[?2004l');
-      }
-      rl.removeListener('line', onLine);
-    };
+      const cleanup = () => {
+        if (settled) return;
+        settled = true;
+        disableBracketedPaste();
+        rl.removeListener('line', onLine);
+        rl.removeListener('close', onClose);
+        if (timeout) clearTimeout(timeout);
+      };
 
-    // Display the prompt manually
-    process.stdout.write(promptPrefix);
+      const finish = (value: string) => {
+        cleanup();
+        resolve(value);
+      };
 
-    const onLine = (line: string) => {
-      let currentLine = line;
+      const onClose = () => {
+        cleanup();
+        reject(new Error('readline was closed'));
+      };
 
-      if (currentLine.includes('\x1b[200~')) {
-        bracketedPasteActive = true;
-        currentLine = currentLine.replace('\x1b[200~', '');
-      }
+      process.stdout.write(promptPrefix);
 
-      const hasEndMarker = currentLine.includes('\x1b[201~');
-      if (hasEndMarker) {
-        currentLine = currentLine.replace('\x1b[201~', '');
-      }
+      const onLine = (line: string) => {
+        let currentLine = line;
 
-      const trimmed = currentLine.trim();
-
-      if (bracketedPasteActive) {
-        buffer.push(currentLine);
-        if (hasEndMarker) {
-          bracketedPasteActive = false;
-          if (timeout) clearTimeout(timeout);
-          cleanup();
-          resolve(buffer.join('\n'));
+        if (currentLine.includes('\x1b[200~')) {
+          bracketedPasteActive = true;
+          currentLine = currentLine.replace('\x1b[200~', '');
         }
-        return;
-      }
 
-      // If we are in /multiline or /paste mode
-      if (multilineMode) {
-        if (!trimmed) {
-          // Empty line exits multiline mode
-          cleanup();
-          resolve(buffer.join('\n'));
+        const hasEndMarker = currentLine.includes('\x1b[201~');
+        if (hasEndMarker) {
+          currentLine = currentLine.replace('\x1b[201~', '');
+        }
+
+        const trimmed = currentLine.trim();
+
+        if (bracketedPasteActive) {
+          buffer.push(currentLine);
+          if (hasEndMarker) {
+            bracketedPasteActive = false;
+            finish(buffer.join('\n'));
+          }
           return;
         }
-        buffer.push(line);
-        // Write the prefix for the next multiline line
-        process.stdout.write(theme.accent('│ ') + theme.brandBright('  '));
-        return;
-      }
 
-      // If they type /multiline or /paste on the very first line
-      if (buffer.length === 0 && (trimmed === '/multiline' || trimmed === '/paste')) {
-        multilineMode = true;
-        console.log(theme.accent('│ ') + theme.muted(' (Multiline mode: Type your message. Send an empty line to finish.)'));
-        process.stdout.write(theme.accent('│ ') + theme.brandBright('  '));
-        return;
-      }
-
-      // If they end a line with \ for simple manual multiline
-      if (trimmed.endsWith('\\')) {
-        buffer.push(line.slice(0, -1));
-        // Clear timeout since they are typing manually and we expect more lines
-        if (timeout) {
-          clearTimeout(timeout);
-          timeout = null;
+        if (multilineMode) {
+          if (!trimmed) {
+            finish(buffer.join('\n'));
+            return;
+          }
+          buffer.push(line);
+          process.stdout.write(theme.accent('│ ') + theme.brandBright('  '));
+          return;
         }
-        process.stdout.write(theme.accent('│ ') + theme.brandBright('  '));
-        return;
-      }
 
-      // Otherwise, it's a standard line or part of a paste
-      buffer.push(line);
+        if (buffer.length === 0 && (trimmed === '/multiline' || trimmed === '/paste')) {
+          multilineMode = true;
+          console.log(theme.accent('│ ') + theme.muted(' (Multiline mode: Type your message. Send an empty line to finish.)'));
+          process.stdout.write(theme.accent('│ ') + theme.brandBright('  '));
+          return;
+        }
 
-      if (timeout) clearTimeout(timeout);
+        if (trimmed.endsWith('\\')) {
+          buffer.push(line.slice(0, -1));
+          if (timeout) {
+            clearTimeout(timeout);
+            timeout = null;
+          }
+          process.stdout.write(theme.accent('│ ') + theme.brandBright('  '));
+          return;
+        }
 
-      // Debounce: if no new line arrives within 50ms, we assume the input is finished!
-      timeout = setTimeout(() => {
-        cleanup();
-        resolve(buffer.join('\n'));
-      }, 50);
-    };
+        buffer.push(line);
 
-    rl.on('line', onLine);
-  });
+        if (timeout) clearTimeout(timeout);
 
-  const linesSplit = finalMessage.split('\n');
+        timeout = setTimeout(() => {
+          finish(buffer.join('\n'));
+        }, 50);
+      };
 
-  // Calculate how many terminal lines we need to clear.
-  const promptLen = 4; // length of "│ > "
-  let linesUsed = 1; // Initial newline at top
-  linesUsed += 1; // boxLine('top')
-  linesUsed += 1; // placeholder line
+      rl.on('line', onLine);
+      rl.on('close', onClose);
+    });
 
-  if (multilineMode) {
-    linesUsed += 1; // The "(Multiline mode...)" hint line
-  }
+    const linesSplit = finalMessage.split('\n');
 
-  for (let i = 0; i < linesSplit.length; i++) {
-    const line = linesSplit[i];
-    if (line !== undefined) {
-      const wrapped = wrapText(line, w - promptLen);
-      linesUsed += Math.max(1, wrapped.length);
+    const promptLen = 4;
+    let linesUsed = 1;
+    linesUsed += 1;
+    linesUsed += 1;
+
+    if (multilineMode) {
+      linesUsed += 1;
     }
-  }
 
-  if (multilineMode) {
-    linesUsed += 1; // The final empty line entered to exit multiline mode
-    linesUsed += 1; // The command line /multiline itself
-  }
+    for (let i = 0; i < linesSplit.length; i++) {
+      const line = linesSplit[i];
+      if (line !== undefined) {
+        const wrapped = wrapText(line, w - promptLen);
+        linesUsed += Math.max(1, wrapped.length);
+      }
+    }
 
-  // Clear everything we just printed to replace it with the pretty box
-  for (let i = 0; i < linesUsed; i++) {
-    process.stdout.write('\x1b[1A\x1b[2K');
-  }
+    if (multilineMode) {
+      linesUsed += 1;
+      linesUsed += 1;
+    }
 
-  return finalMessage;
+    for (let i = 0; i < linesUsed; i++) {
+      process.stdout.write('\x1b[1A\x1b[2K');
+    }
+
+    return finalMessage;
+  } finally {
+    disableBracketedPaste();
+    showCursor();
+  }
 }

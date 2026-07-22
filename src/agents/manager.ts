@@ -101,6 +101,11 @@ function subagentTool(
 import { browserTools } from '../tools/browser.tool.js';
 import { imageIntelligenceTools } from '../tools/image-intelligence.tool.js';
 import { webIntelligenceTools } from '../tools/web-intelligence.tool.js';
+import { docxTools } from '../tools/docx.tool.js';
+import { csvTools } from '../tools/csv.tool.js';
+import { htmlReportTools } from '../tools/html-report.tool.js';
+import { chartImageTools } from '../tools/chartImage.tool.js';
+import { pptxTools } from '../tools/pptx.tool.js';
 
 function buildManagerInstructions(options: { sessionId?: string } = {}) {
   const builder = new SystemPromptBuilder();
@@ -449,6 +454,11 @@ export async function createManagerAgent(runId: string = randomUUID(), options: 
       ...browserTools,
       ...imageIntelligenceTools,
       ...webIntelligenceTools,
+      ...docxTools,
+      ...csvTools,
+      ...htmlReportTools,
+      ...chartImageTools,
+      ...pptxTools,
     },
     stopWhen: stepCountIs(limits.managerSteps),
   });

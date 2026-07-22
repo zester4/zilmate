@@ -16,6 +16,11 @@ import { createMCPTools } from '../tools/mcp.tool.js';
 import { devopsTools } from '../tools/devops.tool.js';
 import { cloudTools } from '../tools/cloud.tool.js';
 import { corporateWikiTools } from '../tools/corporate-wiki.tool.js';
+import { docxTools } from '../tools/docx.tool.js';
+import { csvTools } from '../tools/csv.tool.js';
+import { htmlReportTools } from '../tools/html-report.tool.js';
+import { chartImageTools } from '../tools/chartImage.tool.js';
+import { pptxTools } from '../tools/pptx.tool.js';
 
 async function createAppBuilderAgent(runId = 'default') {
   const scratchpadTools = createScratchpadTools(`${runId}:app-builder`);
@@ -63,6 +68,11 @@ async function createAppBuilderAgent(runId = 'default') {
       ...composioTools,
       ...mcpTools,
       ...corporateWikiTools,
+      ...docxTools,
+      ...csvTools,
+      ...htmlReportTools,
+      ...chartImageTools,
+      ...pptxTools,
     },
     stopWhen: stepCountIs(limits.subagentSteps),
   });
@@ -116,6 +126,11 @@ async function createQaIntegrationAgent(runId = 'default') {
       ...composioTools,
       ...mcpTools,
       ...corporateWikiTools,
+      ...docxTools,
+      ...csvTools,
+      ...htmlReportTools,
+      ...chartImageTools,
+      ...pptxTools,
     },
     stopWhen: stepCountIs(limits.subagentSteps),
   });
@@ -194,6 +209,11 @@ export async function createCodingAgent(runId = 'default') {
       ...composioTools,
       ...mcpTools,
       ...corporateWikiTools,
+      ...docxTools,
+      ...csvTools,
+      ...htmlReportTools,
+      ...chartImageTools,
+      ...pptxTools,
     },
     stopWhen: stepCountIs(limits.subagentSteps),
   });

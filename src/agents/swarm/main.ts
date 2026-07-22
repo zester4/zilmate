@@ -9,6 +9,11 @@ import { crossAppLedgerTools } from '../../tools/cross-app-ledger.tool.js';
 import { createMCPTools, mcpManagementTools } from '../../tools/mcp.tool.js';
 import { createComposioTools } from '../../tools/composio.tool.js';
 import { executiveTools } from '../../tools/executive.tool.js';
+import { docxTools } from '../../tools/docx.tool.js';
+import { csvTools } from '../../tools/csv.tool.js';
+import { htmlReportTools } from '../../tools/html-report.tool.js';
+import { chartImageTools } from '../../tools/chartImage.tool.js';
+import { pptxTools } from '../../tools/pptx.tool.js';
 
 export async function createDigitalCorporationMain(runId: string = 'default') {
   const orchestrator = SwarmOrchestrator.getInstance();
@@ -50,6 +55,11 @@ export async function createDigitalCorporationMain(runId: string = 'default') {
       ...mcpTools,
       ...mcpManagementTools,
       ...executiveTools,
+      ...docxTools,
+      ...csvTools,
+      ...htmlReportTools,
+      ...chartImageTools,
+      ...pptxTools,
       delegateToSpecialist: tool({
         description: 'Delegate a business task to a specialized swarm agent in the corporation.',
         inputSchema: z.object({

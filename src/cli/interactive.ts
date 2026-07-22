@@ -13,7 +13,7 @@ import { memoryBackendName } from '../memory/redis.js';
 import { workspaceLayout } from '../workspace/paths.js';
 import { clearSessionApprovals } from '../runtime/confirm.js';
 import { withAskHandler } from '../runtime/ask.js';
-import { printProgress } from './format.js';
+import { printProgress, resetProgressDisplay, printTable } from './format.js';
 import { createReadlineConfirmation } from './confirm.js';
 import { createReadlineAskHandler } from './ask.js';
 import { checkVoiceRuntime, getVoiceConfig } from '../voice/deepgram.js';
@@ -24,7 +24,21 @@ import { printAssistantTurn, printTips, printUserTurn, printWelcomeCard } from '
 import { theme } from './theme.js';
 import { runSwarmCli } from './swarm.js';
 import { discoverSkills } from '../skills/loader.js';
-import { printTable } from './format.js';
+
+function restoreTerminalInput(rl: readline.Interface, rlPaused: { value: boolean }) {
+  resetProgressDisplay();
+  if (rlPaused.value) {
+    rl.resume();
+    rlPaused.value = false;
+  }
+  if (input.isTTY && input.isRaw) {
+    input.setRawMode(false);
+  }
+  if (process.stdout.isTTY) {
+    process.stdout.write('\x1b[?25h');
+    process.stdout.write('\x1b[?2004l');
+  }
+}
 
 function transcript(turns: ChatTurn[]) {
   if (turns.length === 0) return '';
@@ -81,29 +95,45 @@ export async function startInteractiveChat(sessionId = 'default') {
 
   // Track the active abort controller so SIGINT can cancel the current agent run
   let currentAbortController: AbortController | null = null;
+  let sigintStreak = 0;
+  let sigintResetTimer: NodeJS.Timeout | null = null;
+
+  const handleSigint = () => {
+    if (sigintResetTimer) clearTimeout(sigintResetTimer);
+    sigintStreak += 1;
+    sigintResetTimer = setTimeout(() => {
+      sigintStreak = 0;
+    }, 1500);
+
+    if (currentAbortController) {
+      currentAbortController.abort();
+      resetProgressDisplay();
+      try {
+        rl.resume();
+      } catch {
+        // readline may already be closed
+      }
+      if (input.isTTY && input.isRaw) {
+        input.setRawMode(false);
+      }
+      console.log('\n' + theme.warn('Interrupted. Canceling agent...'));
+      if (sigintStreak >= 2) {
+        console.log(theme.error('Force exit.'));
+        rl.close();
+        process.exit(130);
+      }
+      return;
+    }
+
+    rl.close();
+    process.exit(0);
+  };
 
   // Handle Ctrl+C while readline is active (terminal raw mode)
-  rl.on('SIGINT', () => {
-    if (currentAbortController) {
-      currentAbortController.abort();
-      console.log('\n' + theme.warn('Interrupted. Canceling agent...'));
-    } else {
-      // No active agent — clean exit
-      rl.close();
-      process.exit(0);
-    }
-  });
+  rl.on('SIGINT', () => handleSigint());
 
   // Fallback SIGINT for when readline is paused (non-raw stdin)
-  const onProcessSigint = () => {
-    if (currentAbortController) {
-      currentAbortController.abort();
-      console.log('\n' + theme.warn('Interrupted. Canceling agent...'));
-    } else {
-      rl.close();
-      process.exit(0);
-    }
-  };
+  const onProcessSigint = () => handleSigint();
   process.on('SIGINT', onProcessSigint);
 
   try {
@@ -313,7 +343,7 @@ if (message === '/clear') {
       const abortController = new AbortController();
       currentAbortController = abortController;
       try {
-        const response = await withAskHandler(createReadlineAskHandler(rl), () =>
+        const response = await withAskHandler(createReadlineAskHandler(rl, rlPaused), () =>
           runManager(prompt, {
             progress: printProgress,
             sessionId,
@@ -339,9 +369,12 @@ if (message === '/clear') {
         }
       } finally {
         currentAbortController = null;
+        restoreTerminalInput(rl, rlPaused);
       }
     }
   } finally {
+    if (sigintResetTimer) clearTimeout(sigintResetTimer);
+    resetProgressDisplay();
     rl.close();
     process.off('SIGINT', onProcessSigint);
   }

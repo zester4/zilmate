@@ -31,6 +31,18 @@ function modelFamily(modelId: string) {
   return name.split('-')[0]?.toUpperCase() || 'Model';
 }
 
+function normalizeProviderLabel(query?: string) {
+  if (!query?.trim()) return undefined;
+  const q = query.trim().toLowerCase();
+  if (q === 'openai' || q === 'gpt') return 'OpenAI';
+  if (q === 'gemini' || q === 'google') return 'Gemini';
+  if (q === 'claude' || q === 'anthropic') return 'Claude';
+  if (q === 'grok' || q === 'xai') return 'Grok';
+  if (q === 'mistral') return 'Mistral';
+  if (q === 'qwen') return 'Qwen';
+  return query.trim().charAt(0).toUpperCase() + query.trim().slice(1);
+}
+
 function roleForModel(modelId: string) {
   const selected = Object.entries(models)
     .filter(([key, value]) => !['imageDefaultProvider', 'image'].includes(key) && value === modelId)
@@ -91,8 +103,8 @@ export async function printModelBrowser(options: ModelListOptions = {}) {
 
 export async function runModelPicker(query?: string) {
   const availability = await getModelAvailability();
+  const providerLabel = normalizeProviderLabel(query);
 
-  // 1. Filter models if a query (provider name) was provided
   const availableIds = filterModels(availability.availableIds, query);
 
   if (availableIds.length === 0) {
@@ -100,7 +112,13 @@ export async function runModelPicker(query?: string) {
     return null;
   }
 
-  // 2. Choose Role
+  if (providerLabel) {
+    console.log('');
+    console.log(theme.ok(`Provider: ${providerLabel}`));
+    console.log(theme.muted(`${availableIds.length} model${availableIds.length === 1 ? '' : 's'} available`));
+    console.log('');
+  }
+
   const roleChoice = await selectOne('Choose which agent role to configure', roleLabels().map((item) => ({
     id: item.role,
     label: item.label,
@@ -112,16 +130,17 @@ export async function runModelPicker(query?: string) {
     return null;
   }
 
-  // 3. Choose Model (with pagination support automatically from prompt.ts)
   const modelChoice = await selectOne(
-    `Choose a model for ${roleChoice.label}${query ? ` (Filtered by ${query})` : ''}`,
+    providerLabel
+      ? `Choose a ${providerLabel} model for ${roleChoice.label}`
+      : `Choose a model for ${roleChoice.label}`,
     availableIds.map((id) => ({
       id,
       label: id,
       description: modelFamily(id),
     })),
     Math.max(0, availableIds.findIndex((id) => id === currentModelForRole(roleChoice.id as ModelRole))),
-    15 // Page size
+    15,
   );
 
   if (!modelChoice) {
@@ -131,11 +150,14 @@ export async function runModelPicker(query?: string) {
 
   await saveModelSelection(roleChoice.id as ModelRole, modelChoice.id);
 
+  const selectedProvider = modelFamily(modelChoice.id);
+
   printPanel('Model updated', [
     ['Role', roleChoice.label],
+    ['Provider', selectedProvider],
     ['Model', modelChoice.id],
     ['Tip', 'Selection saved to workspace config and applied for this session'],
   ]);
 
-  return { role: roleChoice.id, model: modelChoice.id };
+  return { role: roleChoice.id, model: modelChoice.id, provider: selectedProvider };
 }

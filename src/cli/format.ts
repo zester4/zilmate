@@ -492,6 +492,71 @@ const displayState: DisplayState = {
   activeSpecialists: new Map(),
 };
 
+/** Rolling live activity feed shown inside the thinking/status panel. */
+interface ActivityEntry {
+  ts: number;
+  depth: number;
+  kind: string;
+  label: string;
+  agent?: string;
+}
+
+const activityLog: ActivityEntry[] = [];
+const MAX_ACTIVITY_LINES = 8;
+const VISIBLE_ACTIVITY_LINES = 5;
+
+function pushActivity(entry: Omit<ActivityEntry, 'ts'>) {
+  activityLog.push({ ...entry, ts: Date.now() });
+  while (activityLog.length > MAX_ACTIVITY_LINES) {
+    activityLog.shift();
+  }
+}
+
+function activityPrefix(depth: number): string {
+  if (depth <= 0) return chalk.hex('#22D3EE')('◆');
+  if (depth === 1) return chalk.hex('#A78BFA')('├─');
+  return chalk.hex('#64748B')('│  └');
+}
+
+function renderActivityFeed(innerW: number): string[] {
+  if (activityLog.length === 0) return [];
+  const recent = activityLog.slice(-VISIBLE_ACTIVITY_LINES);
+  const lines: string[] = [];
+  lines.push(zilTheme.thinking(`├${'─'.repeat(Math.max(0, innerW - 1))}┤`));
+  for (const entry of recent) {
+    const agentTag = entry.agent ? chalk.hex('#A78BFA')(`[${entry.agent}] `) : '';
+    const left = `  ${activityPrefix(entry.depth)} ${agentTag}${chalk.hex('#CBD5E1')(truncate(entry.label, innerW - 24))}`;
+    const age = fmtMs(Date.now() - entry.ts);
+    const row = zilTheme.thinking('│ ') + rightAlign(left, age, innerW) + zilTheme.thinking(' │');
+    lines.push(row);
+  }
+  return lines;
+}
+
+/** Fully reset live terminal UI state — call after agent runs, aborts, and errors. */
+export function resetProgressDisplay(full = true) {
+  stopThinkingTicker();
+  wasThinkingActiveBeforePause = false;
+  try {
+    logUpdate.clear();
+    logUpdate.done();
+  } catch {
+    // log-update may throw if stdout is not a TTY
+  }
+  if (process.stdout.isTTY) {
+    process.stdout.write('\x1b[?25h');
+  }
+  if (full) {
+    displayState.activeSpecialist = null;
+    displayState.activeDept = null;
+    displayState.stepCount = 0;
+    displayState.toolStartTimes.clear();
+    displayState.thinkStart = 0;
+    displayState.activeSpecialists.clear();
+    activityLog.length = 0;
+  }
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function fmtMs(ms: number): string {
   if (ms < 1000) return chalk.gray(`${ms}ms`);
@@ -634,6 +699,9 @@ function triggerThinkingTick() {
     const statsRow = zilTheme.thinking('│ ') + rightAlign(statsLeft, statsRight, innerW) + zilTheme.thinking(' │');
     lines.push(statsRow);
 
+    const activityLines = renderActivityFeed(innerW);
+    lines.push(...activityLines);
+
     // Bottom line
     const bot = zilTheme.thinking(`╰${'─'.repeat(w - 2)}╯`);
     lines.push(bot);
@@ -642,7 +710,7 @@ function triggerThinkingTick() {
     return;
   }
 
-  // Fallback to standard single-agent thinking box (unchanged)
+  // Fallback to standard single-agent thinking box
   const frames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
   const elapsed = fmtElapsed(displayState.thinkStart || Date.now());
   const hint = chalk.gray('(Ctrl+C to interrupt)');
@@ -651,15 +719,20 @@ function triggerThinkingTick() {
 
   const leftText = `${zilTheme.thinking(spinner)} ${zilTheme.thinking(thinkingLabel)}`;
   const rightText = `${hint}  ${elapsed}`;
-  
+
   const innerW = w - 4;
   const aligned = rightAlign(leftText, rightText, innerW);
 
   const top = boxLine('top', w, zilTheme.thinking);
   const mid = zilTheme.thinking('│ ') + aligned + zilTheme.thinking(' │');
+  const activityLines = renderActivityFeed(innerW);
   const bot = boxLine('bot', w, zilTheme.thinking);
 
-  logUpdate(`${top}\n${mid}\n${bot}`);
+  const body = activityLines.length > 0
+    ? [top, mid, ...activityLines, bot].join('\n')
+    : `${top}\n${mid}\n${bot}`;
+
+  logUpdate(body);
 }
 
 function startThinkingTicker(label: string) {
@@ -717,6 +790,9 @@ function printProgressWithSticky(event: ProgressEvent) {
     logUpdate.done();
     const worked = formatWorkedTime(Date.now() - displayState.sessionStart);
     console.log(chalk.green(`✔ ${event.label}`) + chalk.gray(`  (worked for ${worked})`));
+    if (activityLog.length > 0) {
+      console.log(chalk.gray(`  ${activityLog.length} activity step${activityLog.length === 1 ? '' : 's'} logged`));
+    }
     // Reset session state
     displayState.activeSpecialist = null;
     displayState.activeDept = null;
@@ -724,7 +800,25 @@ function printProgressWithSticky(event: ProgressEvent) {
     displayState.sessionStart = Date.now();
     displayState.thinkStart = 0;
     displayState.activeSpecialists.clear();
+    activityLog.length = 0;
     return;
+  }
+
+  // Record permanent activity before clearing spinner line
+  const activityDepth =
+    event.type.startsWith('tool:') ? (displayState.activeSpecialist ? 2 : 1)
+    : event.type.startsWith('subagent:') ? 1
+    : event.type.startsWith('specialist:') ? 1
+    : event.type === 'step' ? 1
+    : 0;
+
+  if (!['thinking'].includes(event.type)) {
+    pushActivity({
+      depth: activityDepth,
+      kind: event.type,
+      label: event.detail ? `${event.label} — ${truncate(event.detail, 56)}` : event.label,
+      ...(event.agent ? { agent: event.agent } : {}),
+    });
   }
 
   // Clear the live spinner line before printing a permanent line
@@ -849,7 +943,8 @@ function printProgressWithSticky(event: ProgressEvent) {
     const deptName = (isDept ? event.agent!.split(':')[1] : event.department) || 'General';
     const agentDisplay = event.label;
     console.log('');
-    console.log(agentCard(agentDisplay, deptName, agentDisplay + (event.detail ? `\n\n${event.detail}` : ''), w));
+    console.log(chalk.hex('#A78BFA')('  ▼ Head agent delegated → ') + chalk.bold.white(agentDisplay));
+    console.log(agentCard(agentDisplay, deptName, (event.detail || 'Starting task…'), w));
   }
 
   // ── Subagent step (e.g. coding agent tool calls) ─────────────────────────

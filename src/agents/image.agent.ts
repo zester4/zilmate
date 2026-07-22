@@ -5,6 +5,7 @@ import { models } from '../config/models.js';
 import { imageGenerateTool } from '../tools/image-generate.tool.js';
 import { imageIntelligenceTools } from '../tools/image-intelligence.tool.js';
 import { multimediaTools } from '../tools/multimedia.tool.js';
+import { chartImageTools } from '../tools/chartImage.tool.js';
 import { limits } from '../safety/limits.js';
 import { emitProgress } from '../runtime/progress.js';
 
@@ -50,6 +51,7 @@ export function createImageAgent() {
       generateImage: imageGenerateTool,
       removeBackground: imageIntelligenceTools.removeBackground,
       optimizeImage: multimediaTools.optimizeImage,
+      ...chartImageTools,
     },
     stopWhen: stepCountIs(limits.subagentSteps),
   });

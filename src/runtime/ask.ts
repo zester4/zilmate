@@ -27,6 +27,6 @@ export async function withAskHandler<T>(ask: AskHandler | undefined, run: () => 
   try {
     return await run();
   } finally {
-    handler = ask ?? previous;
+    handler = previous;
   }
 }

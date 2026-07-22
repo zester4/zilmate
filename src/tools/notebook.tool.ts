@@ -1,3 +1,4 @@
+//src/tools/notebook.tool.ts
 import { tool } from 'ai';
 import { z } from 'zod';
 import {
