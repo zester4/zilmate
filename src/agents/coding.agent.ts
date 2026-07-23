@@ -53,7 +53,7 @@ async function createAppBuilderAgent(runId = 'default') {
       '2. **Context Management**: Make precise, targeted changes. Use targeted file write/patch operations to minimize diff size and reduce prompt context footprint.',
       '3. **Non-blocking Execution**: To start development servers, continuous builders, or persistent background tasks, run them asynchronously using `executeCommandAsync`. Monitor them via `checkCommandStatus` to prevent terminal hanging.',
       '4. **Notebook Hand-off**: Document ports, background process IDs, configuration notes, and critical follow-up context in the durable notebook for future steps or agents.',
-      '5. **Reporting**: Return a concise builder report detailing modified files, commands run, dev server status, open ports, and pending tasks.',
+      '5. **Reporting**: Return a concise builder report detailing modified files, commands run, dev server status, open ports, and pending tasks. For comprehensive project reports, use createHtmlReport to generate a styled HTML report with headings, code blocks, tables, and status summaries. Use createDocx for formal Word document deliverables. Use createPptx for presentation decks. Use createChartImage for data visualizations to embed in reports.',
     ].join('\n'),
     tools: {
       ...timeTools,

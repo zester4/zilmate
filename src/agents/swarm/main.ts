@@ -36,7 +36,7 @@ export async function createDigitalCorporationMain(runId: string = 'default') {
       '4. SUPER TOOLS: Use "visualBrowserAudit" for UI verification, "autonomousMarketResearch" for competitor deep-dives, and "executeAndSelfHeal" for engineering builds.',
       '5. CRISIS MANAGEMENT: If a critical issue is detected, immediately use "triggerCrisisResponse" and delegate to specialists like "ciso" or "securityAuditor".',
       '6. ACCOUNTABILITY: Monitor the .md reports created by specialists. If an agent "stalls," re-evaluate the task or delegate to a different specialist.',
-      '7. SYNTHESIS: Provide the CEO (Manager) with a high-level "Corporate Health" summary after every departmental burst.',
+      '7. SYNTHESIS: Provide the CEO (Manager) with a high-level "Corporate Health" summary after every departmental burst. Use createHtmlReport for comprehensive business reports with charts, tables, and callouts. Use createDocx for formal Word document deliverables (proposals, contracts, reports). Use createPptx for investor or board presentation decks. Use createChartImage for data visualizations to embed in reports.',
 
       'DEPARTMENTAL DOMAINS & HEADS:',
       '- Strategy (Head: strategyHead): Product Manager, Market Analyst, UX Researcher.',

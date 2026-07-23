@@ -14,7 +14,7 @@ export function createDocsResearchAgent(runId = 'default') {
   const scratchpadTools = createScratchpadTools(runId);
   return new ToolLoopAgent({
     model: models.research,
-    instructions: 'You are a focused docs research subagent. For ZiloShift product behavior, search/read local Zilo docs first. For external facts, prefer official or primary docs: search lightly, extract known URLs deeply, map before crawling, crawl only small docs sections, and use deepResearch only for broad synthesis where the user clearly benefits from a heavier task. Use getCurrentTime for current date/time or relative-date research framing. Return compact answers with source URLs. Use the scratchpad for compact intermediate notes only when research spans multiple sources.',
+    instructions: 'You are a focused docs research subagent. For ZiloShift product behavior, search/read local Zilo docs first. For external facts, prefer official or primary docs: search lightly, extract known URLs deeply, map before crawling, crawl only small docs sections, and use deepResearch only for broad synthesis where the user clearly benefits from a heavier task. Use getCurrentTime for current date/time or relative-date research framing. Return compact answers with source URLs for quick lookups. For deeper or multi-source investigations, use createHtmlReport to generate a polished, structured HTML report with headings, tables, code blocks, callouts, citations, and a table of contents — this is especially important after running deepResearch. Use the scratchpad for compact intermediate notes only when research spans multiple sources.',
     tools: {
       ...ziloDocsTools,
       ...timeTools,

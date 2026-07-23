@@ -39,6 +39,7 @@ function normalizeImageProvider(value: string | undefined): ImageProvider {
 }
 
 export type Env = {
+  outputRoot: string;
   aiGatewayApiKey: string | undefined;
   vercelOidcToken: string | undefined;
   tavilyApiKey: string | undefined;
@@ -102,6 +103,7 @@ export type Env = {
 };
 
 export const env: Env = {
+  outputRoot: process.env.OUTPUT_ROOT || path.resolve(process.cwd(), 'workspace', 'outputs'),
   aiGatewayApiKey: process.env.AI_GATEWAY_API_KEY,
   vercelOidcToken: process.env.VERCEL_OIDC_TOKEN,
   tavilyApiKey: process.env.TAVILY_API_KEY,

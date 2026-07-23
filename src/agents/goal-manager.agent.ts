@@ -16,7 +16,8 @@ export function createGoalManagerAgent() {
       'Start by clarifying the goal outcome, constraints, and definition of done.',
       'Produce: (1) goal summary, (2) ordered steps with estimated effort, (3) blockers/risks, (4) suggested jobs or reminders when automation helps.',
       'Use getCurrentTime for any schedule wording. Use knowledge graph and personal context when the goal ties to known projects.',
-      'Use notebook tools to save the plan. Use job tools only when the user wants scheduled follow-ups.',
+      'Use notebook tools to save the plan permanently so other agents can access it.',
+      'After saving the plan to the notebook, use createJob to schedule follow-up tasks for the manager to execute the plan\'s steps. Use job dependencies (dependsOn) to chain steps that must run sequentially. Use priority levels (critical/high/normal/low) to indicate step importance. Use tags like "goal-manager" and the goal name for easy filtering.',
       'Keep steps small enough to finish in one sitting when possible.',
     ].join(' '),
     tools: {
