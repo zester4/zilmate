@@ -5,6 +5,7 @@ import { isRecurringSchedule, nextRunFromSchedule } from './schedule.js';
 import { appendJobLog, getJob, listJobs, resolveDependencies, saveJob, updateJobStatus } from './store.js';
 import type { RunJobOptions, ZilMateJob } from './types.js';
 import { assessJobAnomaly, recordJobFingerprint } from './anomaly.js';
+import { dispatchJobNotification } from './notify.js';
 
 function now() {
   return new Date().toISOString();
@@ -43,6 +44,9 @@ export async function runJob(id: string, options: RunJobOptions = {}) {
     await appendJobLog(job.id, 'warning', 'Job requires approval before running.');
     return job;
   }
+
+  // Dispatch start notification
+  await dispatchJobNotification(job, 'start');
 
   const startedAt = now();
   const timeoutMs = job.timeoutMs;
@@ -113,6 +117,9 @@ export async function runJob(id: string, options: RunJobOptions = {}) {
     // Resolve dependencies for waiting jobs
     await resolveDependencies();
 
+    // Dispatch success notification
+    await dispatchJobNotification(finalJob, 'success');
+
     return finalJob;
   } catch (error) {
     if (timeoutHandle) clearTimeout(timeoutHandle);
@@ -135,6 +142,11 @@ export async function runJob(id: string, options: RunJobOptions = {}) {
       ...(shouldRetry ? {} : { completedAt: now() }),
       progress: shouldRetry ? undefined : 0,
     } as ZilMateJob);
+
+    // Dispatch failure notification (only on final failure, not retries)
+    if (!shouldRetry) {
+      await dispatchJobNotification(failed, 'failure');
+    }
 
     return failed;
   }

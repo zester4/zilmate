@@ -1,3 +1,4 @@
+// src/tools/notify.tool.ts
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { tool } from 'ai';
@@ -45,24 +46,60 @@ $notify.Dispose()
 
 export const notifyTools = {
   sendNotification: tool({
-    description: 'Send a native desktop notification on the user PC when approval is needed, a job finished, or the user should be alerted.',
+    description: 'Send a native desktop notification on the user PC when approval is needed, a job finished, or the user should be alerted. Also supports webhook and Slack notifications for job events.',
     inputSchema: z.object({
       title: z.string().min(1).max(120),
       message: z.string().min(1).max(500),
       urgency: z.enum(['low', 'normal', 'critical']).optional(),
+      webhook: z.string().url().optional().describe('Optional webhook URL to POST the notification to.'),
+      slack: z.string().url().optional().describe('Optional Slack webhook URL to send the notification to.'),
     }),
-    execute: async ({ title, message, urgency }) => {
+    execute: async ({ title, message, urgency, webhook, slack }) => {
       emitProgress({ type: 'step', label: 'Sending notification', detail: title });
+
+      const results: Record<string, any> = {};
+
+      // Desktop notification
       try {
-        const result = await sendDesktopNotification(title, message, urgency ?? 'normal');
-        return { ok: true, ...result };
+        const desktopResult = await sendDesktopNotification(title, message, urgency ?? 'normal');
+        results.desktop = desktopResult;
       } catch (error) {
-        return {
+        results.desktop = {
           ok: false,
           error: error instanceof Error ? error.message : String(error),
           hint: 'Ensure notifications are enabled for your terminal on this OS.',
         };
       }
+
+      // Webhook notification
+      if (webhook) {
+        try {
+          const response = await fetch(webhook, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title, message, urgency: urgency ?? 'normal' }),
+          });
+          results.webhook = { ok: response.ok, status: response.status };
+        } catch (error) {
+          results.webhook = { ok: false, error: error instanceof Error ? error.message : String(error) };
+        }
+      }
+
+      // Slack notification
+      if (slack) {
+        try {
+          const response = await fetch(slack, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: `*${title}*\n${message}` }),
+          });
+          results.slack = { ok: response.ok, status: response.status };
+        } catch (error) {
+          results.slack = { ok: false, error: error instanceof Error ? error.message : String(error) };
+        }
+      }
+
+      return { ok: true, ...results };
     },
   }),
 };

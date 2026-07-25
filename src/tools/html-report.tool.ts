@@ -420,7 +420,7 @@ export const htmlReportTools = {
       filename: z.string().min(1).describe('Base filename, e.g. "weekly-summary.html"'),
       title: z.string(),
       subtitle: z.string().optional(),
-      accentColor: z.string().optional().describe('Hex color, e.g. "#1d4ed8"; defaults to brand blue'),
+      accentColor: z.string().optional().describe('Hex color, e.g. "#004953"; defaults to midnight green'),
       theme: z.enum(['light', 'dark']).default('light'),
       footerNote: z.string().optional().describe('Small text shown at the bottom, e.g. generation date/source'),
       fontFamily: z.string().optional().describe('Google Font name, e.g. "Inter" or "Roboto"'),
@@ -430,7 +430,7 @@ export const htmlReportTools = {
     execute: async ({ filename, title, subtitle, accentColor, theme, footerNote, fontFamily, showReadingTime, blocks }) => {
       emitProgress({ type: 'step', label: 'Generating HTML report', detail: filename });
 
-      const accent = accentColor ?? '#1d4ed8';
+      const accent = accentColor ?? '#004953';
       const headings = blocks
         .filter((b): b is { type: 'heading'; text: string; level: number; anchor?: string } => b.type === 'heading')
         .map((h) => ({ text: h.text, level: h.level, id: h.anchor ? slugify(h.anchor) : slugify(h.text) }));
@@ -444,11 +444,11 @@ export const htmlReportTools = {
       const readingTime = Math.max(1, Math.round(wordCount / 200));
 
       const isDark = theme === 'dark';
-      const bg = isDark ? '#0f1115' : '#ffffff';
+      const bg = isDark ? '#0f1115' : '#F5F0E8';
       const ink = isDark ? '#e5e7eb' : '#1a1a1a';
-      const muted = isDark ? '#9ca3af' : '#666666';
-      const border = isDark ? '#262a33' : '#eeeeee';
-      const cardBg = isDark ? '#171a21' : '#f8f9fc';
+      const muted = isDark ? '#9ca3af' : '#6B6258';
+      const border = isDark ? '#262a33' : '#D4C9B8';
+      const cardBg = isDark ? '#171a21' : '#EDE7DB';
       const preBg = isDark ? '#1a1d24' : '#0f1115';
       const preFg = '#e5e7eb';
 
@@ -456,8 +456,8 @@ export const htmlReportTools = {
         ? `<link href="https://fonts.googleapis.com/css2?family=${fontFamily.replace(/ /g, '+')}:wght@400;600;700&display=swap" rel="stylesheet" />`
         : '';
       const fontStack = fontFamily
-        ? `"${fontFamily}", -apple-system, "Segoe UI", sans-serif`
-        : '-apple-system, "Inter", "Segoe UI", sans-serif';
+        ? `"${fontFamily}", "Georgia", "Palatino", serif`
+        : '"Georgia", "Palatino", "Times New Roman", serif';
 
       const html = `<!DOCTYPE html>
 <html lang="en">
@@ -471,10 +471,15 @@ export const htmlReportTools = {
 ${fontImport}
 <style>
   :root { --accent: ${accent}; --ink: ${ink}; --muted: ${muted}; --border: ${border}; --card-bg: ${cardBg}; --bg: ${bg}; --pre-bg: ${preBg}; }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+  * { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
   *, *::before, *::after { box-sizing: border-box; }
   body { font-family: ${fontStack}; max-width: 900px; margin: 40px auto; padding: 0 24px; color: var(--ink); background: var(--bg); line-height: 1.6; -webkit-font-smoothing: antialiased; }
-  h1 { font-size: 28px; margin-bottom: 4px; }
-  h2 { font-size: 20px; margin-top: 36px; border-bottom: 2px solid var(--border); padding-bottom: 6px; }
+  h1 { font-size: 28px; margin-bottom: 4px; color: var(--accent); }
+  h2 { font-size: 20px; margin-top: 36px; border-bottom: 2px solid var(--border); padding-bottom: 6px; color: var(--accent); }
   h3 { font-size: 17px; color: var(--accent); margin-top: 24px; }
   .subtitle { color: var(--muted); margin-top: 0; font-size: 16px; }
   .lead { font-size: 18px; color: var(--muted); line-height: 1.7; }
