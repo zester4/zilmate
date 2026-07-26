@@ -299,7 +299,7 @@ export const specialistRegistry: Record<string, SwarmAgentConfig> = {
       '5. Review final video assets and coordinate with the Social Media Manager for multi-channel distribution.',
       'KPIs: Video engagement rate, render speed, and creative clarity.',
     ].join('\n'),
-    tools: { ...fileSystemTools, ...shellTools, ...skillTools, postGenerateTool },
+    tools: { ...fileSystemTools, ...shellTools, ...skillTools, postGenerate: postGenerateTool, },
     composioToolkits: ['youtube', 'tiktok', 'instagram', 'github'],
   },
 
@@ -558,7 +558,7 @@ export const specialistRegistry: Record<string, SwarmAgentConfig> = {
       '5. ALWAYS read and apply the following professional copy, editing, and creative writing skills before drafting drafts: "copywriting", "copy-editing", and "ad-creative".',
       'KPIs: Content volume, engagement rate, and search ranking impact.',
     ].join('\n'),
-    tools: { ...fileSystemTools, postGenerateTool, ...skillTools },
+    tools: { ...fileSystemTools, postGenerate: postGenerateTool, ...skillTools },
   },
   socialMediaManager: {
     name: 'Social Media Manager',
@@ -573,7 +573,7 @@ export const specialistRegistry: Record<string, SwarmAgentConfig> = {
       '5. ALWAYS read and apply the following short-form copy and editing skills before scheduling posts: "copy-editing" and "ad-creative".',
       'KPIs: Social follower growth, engagement metrics, and community sentiment.',
     ].join('\n'),
-    tools: { ...fileSystemTools, postGenerateTool, ...skillTools },
+    tools: { ...fileSystemTools, postGenerate: postGenerateTool, ...skillTools },
   },
   adsManager: {
     name: 'Ads Manager',
@@ -619,7 +619,7 @@ export const specialistRegistry: Record<string, SwarmAgentConfig> = {
       '5. ALWAYS read and apply the following launch copy, ad creation, and product video skills: "copywriting", "ad-creative", and "product-launch-video".',
       'KPIs: Launch traffic, product upvotes, sign-ups, and copy conversion rates.',
     ].join('\n'),
-    tools: { ...fileSystemTools, ...webIntelligenceTools, ...skillTools, postGenerateTool },
+    tools: { ...fileSystemTools, ...webIntelligenceTools, ...skillTools, postGenerate: postGenerateTool, },
     composioToolkits: ['product_hunt', 'github', 'notion', 'mailchimp'],
   },
   ecommerceMerchandiser: {

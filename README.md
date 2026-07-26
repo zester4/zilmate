@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.9.1-blue.svg?style=flat-square" alt="Version">
+  <img src="https://img.shields.io/badge/version-1.10.5-blue.svg?style=flat-square" alt="Version">
   <img src="https://img.shields.io/badge/node-%3E%3D20.0.0-green.svg?style=flat-square" alt="Node Engine">
   <img src="https://img.shields.io/badge/platform-windows%20%7C%20macos%20%7C%20linux-lightgrey.svg?style=flat-square" alt="Platform Support">
   <img src="https://img.shields.io/badge/license-ISC-orange.svg?style=flat-square" alt="License">

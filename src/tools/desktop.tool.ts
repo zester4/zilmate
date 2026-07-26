@@ -543,7 +543,7 @@ export async function listCameraDevices(): Promise<CameraDeviceInfo[]> {
       return names;
     }
     const candidates = cameraCandidates();
-    const available = [];
+    const available: any[] = [];
     for (const input of candidates) {
       if (existsSync(input)) available.push({ name: input, input });
     }

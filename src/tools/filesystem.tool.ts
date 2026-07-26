@@ -153,7 +153,7 @@ export const fileSystemTools = {
       emitProgress({ type: 'search:start', label: 'Searching files', detail: query });
       const entries = await walk(searchRoot, { maxDepth: maxDepth ?? 5, maxEntries: 1000 });
       const normalized = query.toLowerCase();
-      const matches = [];
+      const matches: any[] = [];
       for (const entry of entries) {
         if (matches.length >= (maxResults ?? 50)) break;
         const nameMatch = entry.path.toLowerCase().includes(normalized);
