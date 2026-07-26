@@ -14,6 +14,27 @@ function npmCommand() {
   return process.platform === 'win32' ? 'npm.cmd' : 'npm';
 }
 
+export function buildNpmInstallArgs(spec: string, options: { platform?: NodeJS.Platform } = {}) {
+  const platform = options.platform ?? process.platform;
+  const args = ['install', '-g', spec, '--no-audit', '--no-fund'];
+  if (platform === 'win32') {
+    args.push('--force');
+  }
+  return args;
+}
+
+export function shouldRetryWithoutScripts(detail: string) {
+  const normalized = detail.toLowerCase();
+  return (
+    normalized.includes('eperm') ||
+    normalized.includes('access is denied') ||
+    normalized.includes('operation not permitted') ||
+    normalized.includes('postinstall') ||
+    normalized.includes('permission denied') ||
+    normalized.includes('running scripts')
+  );
+}
+
 function parseVersion(version: string) {
   return version
     .trim()
@@ -65,7 +86,7 @@ export async function runSelfUpdate(options: { tag?: string; dryRun?: boolean } 
     throw new Error('Update tag can only contain letters, numbers, dot, underscore, or dash.');
   }
   const spec = `${packageName}@${tag}`;
-  const args = ['install', '-g', spec];
+  const args = buildNpmInstallArgs(spec);
   if (options.dryRun) {
     printPanel('Update dry run', [
       ['Command', `${npmCommand()} ${args.join(' ')}`],
@@ -99,6 +120,26 @@ export async function runSelfUpdate(options: { tag?: string; dryRun?: boolean } 
       detail = `${detail}\n${stderr.trim()}`;
     }
 
+    if (shouldRetryWithoutScripts(detail) && !args.includes('--ignore-scripts')) {
+      try {
+        const retryArgs = [...args, '--ignore-scripts'];
+        const retryResult = process.platform === 'win32'
+          ? await execAsync(`${npmCommand()} ${retryArgs.join(' ')}`, { windowsHide: true, timeout: 120_000 })
+          : await execFileAsync(npmCommand(), retryArgs, { windowsHide: true, timeout: 120_000 });
+        const { stdout, stderr: retryStderr } = retryResult;
+        if (stdout.trim()) console.log(stdout.trim());
+        if (retryStderr.trim()) console.error(retryStderr.trim());
+        printPanel('Update complete', [
+          ['Verify', 'zilmate --version'],
+          ['Health', 'zilmate doctor'],
+          ['Note', 'Installed without lifecycle scripts due to a common npm permission issue'],
+        ]);
+        return;
+      } catch {
+        // Fall through to the original error messaging below.
+      }
+    }
+
     // Clean up common messy npm error output
     if (detail.includes('npm warn deprecated')) {
       const parts = detail.split('\n');
@@ -118,6 +159,7 @@ export async function runSelfUpdate(options: { tag?: string; dryRun?: boolean } 
         tips.push(['Note', 'Files might be locked. Close all ZilMate windows and try again in a new terminal.']);
         tips.push(['Admin', 'Try running your terminal as Administrator']);
       }
+      tips.push(['Windows fix', 'If npm still fails, run: npm install -g zilmate@latest --no-audit --no-fund --force --ignore-scripts']);
     } else if (detail.includes('EACCES')) {
       tips.push(['Note', 'Try running with sudo']);
     }

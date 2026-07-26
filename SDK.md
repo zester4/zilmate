@@ -87,6 +87,43 @@ export type ZilMateOptions = {
 };
 ```
 
+### Direct Subagent Delegation
+
+You can now route work to specialist agents explicitly without going through the general manager loop.
+
+```typescript
+import { createZilMate } from 'zilmate/server';
+
+const sdk = createZilMate({ sessionId: 'app-session' });
+
+const result = await sdk.callSubagent({
+  subagent: 'coding',
+  prompt: 'Inspect the repo, fix the failing tests, and summarize the changes',
+});
+
+console.log(result.text);
+```
+
+The same entrypoint also supports swarm specialist keys such as `cto`, `cmo`, `fullStackCoder`, or `securityAuditor`, which route through the swarm runtime and specialist registry instead of the generic manager path.
+
+```typescript
+const swarmResult = await sdk.callSubagent({
+  subagent: 'cto',
+  prompt: 'Review the current deployment plan and identify high-risk architecture gaps',
+});
+```
+
+### New Runtime Capabilities
+
+The SDK runtime now exposes advanced automation layers for production workflows:
+
+- Terminal workbench sessions with start/send/inspect/snapshot/list/stop operations
+- Stateful browser automation workflows with recorded step traces
+- Sandbox verification loops that compile, test, and analyze diagnostics
+- Rich swarm observability and specialist delegation hooks
+
+These capabilities are available to the manager and swarm agents automatically and can be surfaced to your app through the same SDK entrypoint.
+
 ---
 
 ## 🔄 CLI Parity Reference

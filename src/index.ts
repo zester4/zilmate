@@ -8,6 +8,7 @@ import { requireGatewayAuth } from './config/env.js';
 import { models } from './config/models.js';
 import { runManager } from './agents/manager.js';
 import { createQuickHelpAgent } from './agents/quick-help.agent.js';
+
 import { createChatAgent } from './agents/chat.agent.js';
 import { createPostAgent } from './agents/post.agent.js';
 import { createDocsResearchAgent } from './agents/docs-research.agent.js';
@@ -63,7 +64,7 @@ const program = new Command();
 program
   .name('zilmate')
   .description('ZilMate Agent')
-  .version('1.11.0');
+  .version('1.12.0');
 
 program
   .command('welcome')

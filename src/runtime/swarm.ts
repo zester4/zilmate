@@ -9,6 +9,8 @@ import { getCollaborateWithPeerTool } from '../tools/swarm-ops.tool.js';
 import { corporateWikiTools } from '../tools/corporate-wiki.tool.js';
 import { sandboxDevTools } from '../tools/sandbox-dev.tool.js';
 import { createScratchpadTools } from '../tools/scratchpad.tool.js';
+import { terminalWorkbenchTools } from '../tools/terminal-workbench.tool.js';
+import { browserWorkflowTools } from '../tools/browser-workflow.tool.js';
 
 export type SwarmDepartment = 'Strategy' | 'Engineering' | 'Growth' | 'Operations' | 'Data' | 'Security' | 'Revenue' | 'Development';
 
@@ -80,6 +82,8 @@ export class SwarmAgent {
         ...corporateWikiTools,
         ...sandboxDevTools,
         ...scratchpadTools,
+        ...terminalWorkbenchTools,
+        ...browserWorkflowTools,
         collaborateWithPeer: getCollaborateWithPeerTool(this.config.name),
         updateStatusReport: tool({
           description: 'Update your departmental status report (.md file). Use this to track what you are doing or what you have finished.',

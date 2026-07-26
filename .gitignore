@@ -22,3 +22,4 @@ Thumbs.db
 
 # NPM pack tarballs
 *.tgz
+.vscode/
