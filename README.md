@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.9.1-blue.svg?style=flat-square" alt="Version">
+  <img src="https://img.shields.io/badge/version-1.12.2-blue.svg?style=flat-square" alt="Version">
   <img src="https://img.shields.io/badge/node-%3E%3D20.0.0-green.svg?style=flat-square" alt="Node Engine">
   <img src="https://img.shields.io/badge/platform-windows%20%7C%20macos%20%7C%20linux-lightgrey.svg?style=flat-square" alt="Platform Support">
   <img src="https://img.shields.io/badge/license-ISC-orange.svg?style=flat-square" alt="License">
@@ -21,7 +21,7 @@ ZilMate is a CLI-first general assistant with deep built-in ZiloShift expertise.
 
 ZilMate can also work with local files inside safe configured roots: search files/folders, read text files, write approved files, create folders, move/copy/rename, summarize documents, compare folder snapshots for changes, and find duplicate or large files. Sensitive files such as `.env`, keys, credentials, and token-looking paths are blocked.
 
-It can also use approved desktop context: read/write clipboard text, take screenshots, open the laptop camera for a still photo, and analyze screenshots/photos with `google/gemini-3.1-flash-lite` by default. Screenshot analysis describes visible UI, extracts visible text when possible, identifies errors or unusual states, and can optionally search the web for troubleshooting context. Camera photo analysis describes visible objects, environments, documents, devices, or issues without identifying people or inferring sensitive traits.
+It can also use approved desktop context: read/write clipboard text, take screenshots, open the laptop camera for a still photo, and analyze screenshots/photos with `google/gemini-3.1-flash-lite` by default. Screenshot analysis describes visible UI, extracts visible text when possible, identifies errors or unusual states, and can optionally search the web for troubleshooting context. Camera photo analysis describes visible objects, environments, documents, devices, or issues without identifying people or inferring sensitive traits. When `ZILMATE_UBIQUITY_SCREEN_CONTEXT=true`, system-wide `@zilmate` hotkey rewrites can analyze the current screen before writing so replies can account for visible Telegram, WhatsApp, email, browser, editor, or form context.
 
 The GitHub project and repository name is now `zilmate`, matching the installable npm package and command.
 
@@ -169,6 +169,7 @@ ZILMATE_VOICE_LANGUAGE_HINTS=
 ZILMATE_VOICE_BARGE_IN=true
 ZILMATE_VOICE_INPUT_DEVICE=
 ZILMATE_SCREENSHOT_MODEL=google/gemini-3.1-flash-lite
+ZILMATE_UBIQUITY_SCREEN_CONTEXT=false
 ZILMATE_CAMERA_DEVICE=
 ZILMATE_FILE_ROOTS=
 ZILO_MANAGER_MODEL=minimax/minimax-m3
@@ -199,6 +200,7 @@ zilmate setup --yes --ai-gateway-key <key> --install-camera-deps true
 zilmate setup --yes --ai-gateway-key <key> --camera-device "video=Integrated Camera"
 zilmate setup --yes --ai-gateway-key <key> --file-roots "C:\Users\me\Documents,C:\work"
 zilmate setup --yes --ai-gateway-key <key> --screenshot-model google/gemini-3.1-flash-lite
+zilmate setup --yes --ai-gateway-key <key> --ubiquity-screen-context true
 ```
 
 ---

@@ -77,6 +77,7 @@ export type Env = {
   imageGeminiModel: string;
   imageModel: string;
   screenshotVisionModel: string;
+  zilmateUbiquityScreenContext: boolean;
   codingModel: string | undefined;
   slackBotToken: string | undefined;
   slackSigningSecret: string | undefined;
@@ -141,6 +142,7 @@ export const env: Env = {
   imageGeminiModel: process.env.ZILO_IMAGE_GEMINI_MODEL || process.env.ZILO_IMAGE_MODEL || 'google/gemini-3.1-flash-image',
   imageModel: process.env.ZILO_IMAGE_MODEL || 'google/gemini-3.1-flash-image',
   screenshotVisionModel: process.env.ZILMATE_SCREENSHOT_MODEL || 'google/gemini-3.1-flash-lite',
+  zilmateUbiquityScreenContext: process.env.ZILMATE_UBIQUITY_SCREEN_CONTEXT === 'true',
   codingModel: process.env.ZILO_CODING_MODEL || undefined,
   slackBotToken: process.env.SLACK_BOT_TOKEN,
   slackSigningSecret: process.env.SLACK_SIGNING_SECRET,

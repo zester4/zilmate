@@ -1,5 +1,10 @@
 # Changelog
 
+## Local ZilMate Note - 2026-07-27
+
+- ZilMate package bumped to 1.12.2.
+- Added optional `ZILMATE_UBIQUITY_SCREEN_CONTEXT=true` support for screen-aware Ubiquity rewrites.
+
 ## [1.3.0](https://github.com/supabase/agent-skills/compare/v1.2.0...v1.3.0) (2026-06-05)
 
 

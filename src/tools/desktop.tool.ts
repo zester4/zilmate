@@ -449,7 +449,7 @@ function writeToCommand(command: string, args: string[], input: string) {
   });
 }
 
-async function captureScreenshot() {
+export async function captureScreenshot() {
   await mkdir(screenshotDir, { recursive: true });
   const target = path.join(screenshotDir, `zilmate-screen-${Date.now()}.png`);
 
@@ -611,7 +611,7 @@ export async function captureCameraPhoto(device?: string) {
   throw new Error(friendlyCameraError(attempts.at(-1)?.error || 'Camera capture failed.', attempts));
 }
 
-async function analyzeImage(imagePath: string, prompt: string, label = 'image') {
+export async function analyzeImage(imagePath: string, prompt: string, label = 'image') {
   requireGatewayAuth();
   const image = await readFile(imagePath);
   emitProgress({ type: 'tool:start', label: `Analyzing ${label}`, detail: models.screenshotVision });
@@ -649,6 +649,24 @@ const defaultScreenshotPrompt = [
   'If this is a coding or app screen, identify the relevant files, terminal output, browser state, or UI issue.',
   'Be precise and avoid claiming hidden information that is not visible.',
 ].join(' ');
+
+export async function getActiveWindowContextSnapshot() {
+  return getActiveWindow();
+}
+
+export async function analyzeCurrentScreenContext(prompt?: string) {
+  const [activeWindow, file] = await Promise.all([
+    getActiveWindow().catch(() => ({})),
+    captureScreenshot(),
+  ]);
+  const analysis = await analyzeImage(file, prompt || defaultScreenshotPrompt, 'screenshot');
+  return {
+    file,
+    activeWindow,
+    model: models.screenshotVision,
+    analysis,
+  };
+}
 
 const defaultCameraPrompt = [
   'Describe this camera photo clearly and usefully.',

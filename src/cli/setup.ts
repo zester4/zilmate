@@ -118,6 +118,7 @@ type SetupOptions = {
   installCameraDeps?: string;
   installCloudflareDeps?: string;
   screenshotModel?: string;
+  ubiquityScreenContext?: string;
   fileRoots?: string;
   slackBotToken?: string;
   slackSigningSecret?: string;
@@ -148,6 +149,7 @@ const defaults = {
   ZILO_IMAGE_MODEL: '',
   ZILMATE_VOICE_INPUT_DEVICE: '',
   ZILMATE_SCREENSHOT_MODEL: 'google/gemini-3.1-flash-lite',
+  ZILMATE_UBIQUITY_SCREEN_CONTEXT: 'false',
   ZILMATE_CAMERA_DEVICE: '',
   ZILMATE_FILE_ROOTS: '',
 };
@@ -648,6 +650,25 @@ export async function runSetup(options: SetupOptions = {}) {
       }
     }
 
+    const ubiquityScreenContext = options.ubiquityScreenContext !== undefined ? normalizeBooleanOption(options.ubiquityScreenContext) : undefined;
+    if (ubiquityScreenContext !== undefined) {
+      values.set('ZILMATE_UBIQUITY_SCREEN_CONTEXT', ubiquityScreenContext ? 'true' : 'false');
+      touchedKeys.add('ZILMATE_UBIQUITY_SCREEN_CONTEXT');
+    } else if (!options.yes && (!values.has('ZILMATE_UBIQUITY_SCREEN_CONTEXT') || options.force)) {
+      if (await askSection(
+        rl,
+        'Ubiquity screen context',
+        'When enabled, @zilmate hotkey rewrites can capture and analyze the current screen before writing, helping with Telegram, WhatsApp, email, browser, and editor context.',
+        'Enable screen context for @zilmate hotkeys?',
+        false,
+      )) {
+        values.set('ZILMATE_UBIQUITY_SCREEN_CONTEXT', 'true');
+      } else {
+        values.set('ZILMATE_UBIQUITY_SCREEN_CONTEXT', 'false');
+      }
+      touchedKeys.add('ZILMATE_UBIQUITY_SCREEN_CONTEXT');
+    }
+
     // Chat Integration Section
     if (!options.yes && (!values.has('CHAT_INTEGRATION_ENABLED') || options.force)) {
       if (await askSection(
@@ -927,6 +948,7 @@ export async function runSetup(options: SetupOptions = {}) {
       ['QStash', values.get('UPSTASH_QSTASH_TOKEN') && values.get('ZILMATE_PUBLIC_JOB_WEBHOOK_URL') ? 'configured' : 'local schedules only'],
       ['Workspace', values.get('ZILMATE_WORKSPACE') || workspaceLayout().root],
       ['Trigger workflows', values.get('ZILMATE_TRIGGER_WORKFLOWS_ENABLED') === 'true' ? 'enabled' : 'disabled'],
+      ['Ubiquity screen context', values.get('ZILMATE_UBIQUITY_SCREEN_CONTEXT') === 'true' ? 'enabled' : 'disabled'],
       ['Voice', values.get('ZILMATE_VOICE_ENABLED') === 'true' ? values.get('DEEPGRAM_API_KEY') ? 'enabled' : 'enabled, missing Deepgram key' : 'disabled'],
       ['Chat', values.get('CHAT_INTEGRATION_ENABLED') === 'true' ? 'enabled' : 'disabled'],
       ['Cloud Storage', (() => {

@@ -162,6 +162,52 @@ export function parseUbiquityPrompt(text: string): { prompt: string; isTriggered
   return { prompt: trimmed, isTriggered: false };
 }
 
+async function buildUbiquityPrompt(prompt: string, selectedText: string) {
+  if (!env.zilmateUbiquityScreenContext) {
+    return prompt;
+  }
+
+  try {
+    const { analyzeCurrentScreenContext } = await import('../tools/desktop.tool.js');
+    const screen = await analyzeCurrentScreenContext([
+      'Analyze the current screen before ZilMate writes into the selected app.',
+      'Focus on the active application, visible conversation or document context, recipient or channel cues, tone, intent, and visible constraints.',
+      'If this looks like Telegram, WhatsApp, Slack, email, a browser, an editor, or a form, explain the relevant context for drafting or rewriting.',
+      'Do not infer hidden or private information that is not visible.',
+    ].join(' '));
+
+    const activeWindow = screen.activeWindow && Object.keys(screen.activeWindow).length > 0
+      ? JSON.stringify(screen.activeWindow)
+      : 'Unavailable';
+
+    return [
+      'You are processing a system-wide ZilMate Ubiquity request.',
+      'Use the selected text and visible screen context to understand why the user is asking, who or what they may be replying to, and what tone is appropriate.',
+      '',
+      `Active window: ${activeWindow}`,
+      `Screenshot file: ${screen.file}`,
+      '',
+      'Visible screen analysis:',
+      screen.analysis,
+      '',
+      'Selected text:',
+      selectedText.trim(),
+      '',
+      'User instruction / cleaned prompt:',
+      prompt,
+      '',
+      'Return the best text to insert. Avoid generic preambles unless the user explicitly asked for explanation.',
+    ].join('\n');
+  } catch (error) {
+    console.warn(theme.warn('[Ubiquity] Screen context unavailable:'), error instanceof Error ? error.message : String(error));
+    return [
+      prompt,
+      '',
+      '[Screen context was enabled but unavailable. Continue using selected text only.]',
+    ].join('\n');
+  }
+}
+
 export async function handleProcessRequest(req: IncomingMessage, res: ServerResponse) {
   let body = '';
   req.on('data', (chunk) => {
@@ -180,10 +226,11 @@ export async function handleProcessRequest(req: IncomingMessage, res: ServerResp
 
       console.log(theme.muted(`[Ubiquity] Received text length: ${text.length}`));
       const { prompt, isTriggered } = parseUbiquityPrompt(text);
+      const enrichedPrompt = await buildUbiquityPrompt(prompt, text);
 
       sendOsNotification('ZilMate Ubiquity', 'Thinking... 🧠');
 
-      const response = await runManager(prompt, {
+      const response = await runManager(enrichedPrompt, {
         sessionId: 'ubiquity',
       });
 
@@ -261,7 +308,7 @@ export function startDaemon() {
     // 2. Unauthenticated status ping (used to check if daemon is active)
     if (req.method === 'GET' && pathname === '/api/status') {
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ status: 'ok', version: '3.5.0' }));
+      res.end(JSON.stringify({ status: 'ok', version: '1.12.2' }));
       return;
     }
 
@@ -639,6 +686,7 @@ export function startDaemon() {
           if (key === 'ZILMATE_TRIGGER_WORKFLOWS_ENABLED') configEnv.zilmateTriggerWorkflowsEnabled = value === 'true';
           if (key === 'DEEPGRAM_API_KEY') configEnv.deepgramApiKey = value;
           if (key === 'ZILMATE_VOICE_ENABLED') configEnv.zilmateVoiceEnabled = value === 'true';
+          if (key === 'ZILMATE_UBIQUITY_SCREEN_CONTEXT') configEnv.zilmateUbiquityScreenContext = value === 'true';
           if (key === 'SLACK_BOT_TOKEN') configEnv.slackBotToken = value;
           if (key === 'TELEGRAM_BOT_TOKEN') configEnv.telegramBotToken = value;
           if (key === 'CHAT_INTEGRATION_ENABLED') configEnv.chatIntegrationEnabled = value === 'true';
@@ -756,6 +804,7 @@ export function startDaemon() {
           if (key === 'ZILMATE_VOICE_LISTEN_MODEL') configEnv.zilmateVoiceListenModel = value;
           if (key === 'ZILMATE_VOICE_TTS_MODEL') configEnv.zilmateVoiceTtsModel = value;
           if (key === 'ZILMATE_VOICE_LANGUAGE') configEnv.zilmateVoiceLanguage = value;
+          if (key === 'ZILMATE_UBIQUITY_SCREEN_CONTEXT') configEnv.zilmateUbiquityScreenContext = value === 'true';
 
           res.writeHead(200, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({ success: true }));
@@ -1031,4 +1080,3 @@ export function startDaemon() {
     }
   }
 }
-

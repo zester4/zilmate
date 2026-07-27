@@ -64,7 +64,7 @@ const program = new Command();
 program
   .name('zilmate')
   .description('ZilMate Agent')
-  .version('1.12.0');
+  .version('1.12.2');
 
 program
   .command('welcome')
@@ -142,6 +142,7 @@ program
   .option('--voice-language <language>', 'voice language, e.g. en or en-US')
   .option('--voice-input-device <device>', 'terminal microphone device override for ffmpeg')
   .option('--screenshot-model <model>', 'vision model for screenshot/camera analysis')
+  .option('--ubiquity-screen-context <true|false>', 'enable screenshot context for @zilmate Ubiquity hotkey requests')
   .option('--file-roots <roots>', 'comma-separated extra safe roots for file tools')
   .option('--camera-device <device>', 'optional camera device override, e.g. "video=Integrated Camera"')
   .option('--install-camera-deps <true|false>', 'install ffmpeg for camera capture when missing')
@@ -153,7 +154,7 @@ program
   .option('--gcs-key-file <path>', 'Google Cloud Storage credentials JSON key file path')
   .option('--vercel-blob-token <token>', 'Vercel Blob read/write token')
   .description('Create or update a local .env file for ZilMate')
-  .action(async (options: { path: string; force?: boolean; yes?: boolean; aiGatewayKey?: string; composioKey?: string; zilmateUserId?: string; tavilyKey?: string; redisUrl?: string; redisToken?: string; jobsEnabled?: string; qstashToken?: string; jobWebhookUrl?: string; jobWebhookSecret?: string; triggerWorkflowsEnabled?: string; deepgramKey?: string; voiceEnabled?: string; voiceListenModel?: string; voiceTtsModel?: string; voiceLanguage?: string; voiceInputDevice?: string; screenshotModel?: string; fileRoots?: string; cameraDevice?: string; installCameraDeps?: string; installCloudflareDeps?: string; awsAccessKey?: string; awsSecretKey?: string; awsRegion?: string; gcsProjectId?: string; gcsKeyFile?: string; vercelBlobToken?: string }) => {
+  .action(async (options: { path: string; force?: boolean; yes?: boolean; aiGatewayKey?: string; composioKey?: string; zilmateUserId?: string; tavilyKey?: string; redisUrl?: string; redisToken?: string; jobsEnabled?: string; qstashToken?: string; jobWebhookUrl?: string; jobWebhookSecret?: string; triggerWorkflowsEnabled?: string; deepgramKey?: string; voiceEnabled?: string; voiceListenModel?: string; voiceTtsModel?: string; voiceLanguage?: string; voiceInputDevice?: string; screenshotModel?: string; ubiquityScreenContext?: string; fileRoots?: string; cameraDevice?: string; installCameraDeps?: string; installCloudflareDeps?: string; awsAccessKey?: string; awsSecretKey?: string; awsRegion?: string; gcsProjectId?: string; gcsKeyFile?: string; vercelBlobToken?: string }) => {
     try {
       await runSetup({
         path: options.path,
@@ -177,6 +178,7 @@ program
         ...(options.voiceLanguage !== undefined ? { voiceLanguage: options.voiceLanguage } : {}),
         ...(options.voiceInputDevice !== undefined ? { voiceInputDevice: options.voiceInputDevice } : {}),
         ...(options.screenshotModel !== undefined ? { screenshotModel: options.screenshotModel } : {}),
+        ...(options.ubiquityScreenContext !== undefined ? { ubiquityScreenContext: options.ubiquityScreenContext } : {}),
         ...(options.fileRoots !== undefined ? { fileRoots: options.fileRoots } : {}),
         ...(options.cameraDevice !== undefined ? { cameraDevice: options.cameraDevice } : {}),
         ...(options.installCameraDeps !== undefined ? { installCameraDeps: options.installCameraDeps } : {}),

@@ -19,7 +19,7 @@ import { createReadlineAskHandler } from './ask.js';
 import { checkVoiceRuntime, getVoiceConfig } from '../voice/deepgram.js';
 import { runTerminalVoiceLive } from './voice.js';
 import { printModelBrowser, runModelPicker } from './models.js';
-import { readComposerLine } from './composer.js';
+import { getSlashCommandSuggestions, isCtrlCInput, readComposerLine } from './composer.js';
 import { printAssistantTurn, printTips, printUserTurn, printWelcomeCard } from './render.js';
 import { theme } from './theme.js';
 import { runSwarmCli } from './swarm.js';
@@ -66,9 +66,8 @@ export async function startInteractiveChat(sessionId = 'default') {
   }
 
   const completer = (line: string): [string[], string] => {
-    const completions = ['/exit', '/quit', '/clear', '/help', '/voice', '/swarm', '/model', '/model pick', '/model next', '/heal', '/skills', '/mcp', '/mcp list', '/mcp add', '/mcp remove', '/mcp restart'];
-    const hits = completions.filter((c) => c.startsWith(line));
-    return [hits.length ? hits : completions, line];
+    const completions = getSlashCommandSuggestions(line);
+    return [completions.length > 0 ? completions : getSlashCommandSuggestions('/'), line];
   };
 
   let rl = readline.createInterface({
@@ -174,7 +173,6 @@ export async function startInteractiveChat(sessionId = 'default') {
         console.log(theme.textBright('Commands'));
         console.log(`  ${theme.brand('/exit')}        Quit`);
         console.log(`  ${theme.brand('/clear')}       Clear session history`);
-        console.log(`  ${theme.brand('/paste')}       Enter multiline mode (paste text)`);
         console.log(`  ${theme.brand('/swarm')}       Launch Digital Corporation task`);
         console.log(`  ${theme.brand('/voice')}       Start live voice mode`);
         console.log(`  ${theme.brand('/model')}       Browse AI Gateway models`);
@@ -182,7 +180,7 @@ export async function startInteractiveChat(sessionId = 'default') {
         console.log(`  ${theme.brand('/model next')}  Next model page`);
         console.log(`  ${theme.brand('/skills')}      List installed agent skills`);
         console.log(`  ${theme.brand('/mcp')}         Manage Model Context Protocol servers`);
-        console.log(theme.muted('Tip: Use "\\" at the end of a line for simple multiline input.'));
+        console.log(theme.muted('Tip: Paste long text directly, or use Shift+Enter for a new line.'));
         continue;
       }
       if (message === '/swarm' || message.startsWith('/swarm ')) {
@@ -342,7 +340,17 @@ if (message === '/clear') {
       pauseRl();
       const abortController = new AbortController();
       currentAbortController = abortController;
+      const onAgentInputData = (chunk: Buffer | string) => {
+        if (isCtrlCInput(String(chunk))) {
+          handleSigint();
+        }
+      };
       try {
+        if (input.isTTY) {
+          input.setRawMode(true);
+          input.resume();
+          input.on('data', onAgentInputData);
+        }
         const response = await withAskHandler(createReadlineAskHandler(rl, rlPaused), () =>
           runManager(prompt, {
             progress: printProgress,
@@ -368,6 +376,7 @@ if (message === '/clear') {
           throw error;
         }
       } finally {
+        input.removeListener('data', onAgentInputData);
         currentAbortController = null;
         restoreTerminalInput(rl, rlPaused);
       }

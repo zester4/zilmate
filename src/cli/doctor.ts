@@ -72,6 +72,7 @@ export function getConfigSummary() {
       voice: env.zilmateVoiceEnabled,
       deepgram: Boolean(env.deepgramApiKey),
       chatEnabled: env.chatIntegrationEnabled,
+      ubiquityScreenContext: env.zilmateUbiquityScreenContext,
       slackToken: Boolean(env.slackBotToken),
       telegramToken: Boolean(env.telegramBotToken),
       imessageLocal: env.imessageLocal,
@@ -216,6 +217,14 @@ export async function runDoctor(options: { live?: boolean; sessionId?: string; i
         ? `Chat enabled: ${env.slackBotToken ? 'Slack ' : ''}${env.telegramBotToken ? 'Telegram ' : ''}${env.imessageEnabled ? 'iMessage' : ''}`
         : 'Chat is enabled but no channel tokens are configured (Slack/Telegram/iMessage)'
       : 'External chat channels are disabled',
+  });
+
+  checks.push({
+    name: 'Ubiquity Screen Context',
+    status: env.zilmateUbiquityScreenContext ? 'pass' : 'warn',
+    detail: env.zilmateUbiquityScreenContext
+      ? `Enabled; @zilmate hotkey requests can analyze the current screen using ${env.screenshotVisionModel}`
+      : 'Disabled; set ZILMATE_UBIQUITY_SCREEN_CONTEXT=true to let @zilmate use screenshot context before writing',
   });
 
   checks.push({
